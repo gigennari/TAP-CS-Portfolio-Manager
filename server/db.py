@@ -5,6 +5,6 @@ def init_db():
         host='localhost',
         user='administrator',
         password='n3u3da!',
-        database=''
+        database='bygDB'
     )
     
