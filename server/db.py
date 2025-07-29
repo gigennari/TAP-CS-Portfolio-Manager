@@ -7,3 +7,4 @@ def init_db():
         password='n3u3da!',
         database=''
     )
+    
