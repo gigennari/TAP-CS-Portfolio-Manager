@@ -25,6 +25,14 @@ CREATE TABLE  portfolios (
     active BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE stocks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    symbol VARCHAR(10),  
+    company_name VARCHAR(100),
+    sector VARCHAR(50),
+    industry VARCHAR(50)
+    );
+
 CREATE TABLE stocksportfolios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     portfolios_id INT, 
@@ -35,14 +43,6 @@ CREATE TABLE stocksportfolios (
     average_cost DECIMAL(10, 2) DEFAULT 0.00,
     UNIQUE (portfolios_id, stock_id)
 );
-
-CREATE TABLE stocks (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    symbol VARCHAR(10),  
-    company_name VARCHAR(100),
-    sector VARCHAR(50),
-    industry VARCHAR(50)
-    );
 
 CREATE TABLE stockstransactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
