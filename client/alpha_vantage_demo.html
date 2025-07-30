@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Vantage API Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="config.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-slate-900 mb-6">Alpha Vantage API Integration Demo</h1>
+            
+            <!-- API Key Status -->
+            <div id="apiStatus" class="mb-8 p-4 rounded-lg">
+                <h2 class="text-lg font-semibold mb-2">API Configuration Status</h2>
+                <div id="statusContent">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 bg-yellow-500 rounded-full animate-pulse"></div>
+                        <span>Checking configuration...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Demo -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-slate-900 mb-4">Stock Search Demo</h2>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Type a stock symbol or company name (e.g., AAPL, Microsoft...)" 
+                        class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    >
+                    <div id="searchResults" class="mt-4 space-y-2 hidden">
+                        <!-- Results will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Response Display -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-slate-900 mb-4">Raw API Response</h2>
+                <pre id="apiResponse" class="bg-slate-100 p-4 rounded-lg text-sm overflow-x-auto text-slate-700">
+No search performed yet. Type in the search box above to see the Alpha Vantage API response.
+                </pre>
+            </div>
+
+            <!-- Instructions -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-3">🚀 How to Use This Demo</h3>
+                <ol class="list-decimal list-inside space-y-2 text-blue-800">
+                    <li>Make sure you've configured your Alpha Vantage API key in <code class="bg-blue-100 px-2 py-1 rounded">config.js</code></li>
+                    <li>Type at least 2 characters in the search box above</li>
+                    <li>Watch the real-time search results appear</li>
+                    <li>View the raw API response in the JSON display</li>
+                    <li>Click on any result to see detailed information</li>
+                </ol>
+                
+                <div class="mt-4 p-3 bg-blue-100 rounded">
+                    <p class="text-sm text-blue-700">
+                        <strong>Need an API key?</strong> Get your free Alpha Vantage API key from 
+                        <a href="https://www.alphavantage.co/support/#api-key" target="_blank" class="underline hover:text-blue-900">
+                            alphavantage.co
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="mt-8 flex justify-center">
+                <a href="homebroker.html" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                    Go to Full Homebroker →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check API configuration on load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkApiConfiguration();
+            setupSearchDemo();
+        });
+
+        function checkApiConfiguration() {
+            const statusDiv = document.getElementById('apiStatus');
+            const statusContent = document.getElementById('statusContent');
+            
+            if (CONFIG.ALPHA_VANTAGE_API_KEY === 'YOUR_ALPHA_VANTAGE_API_KEY') {
+                statusDiv.className = 'mb-8 p-4 rounded-lg bg-red-50 border border-red-200';
+                statusContent.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-5 h-5 bg-red-500 rounded-full flex-shrink-0 mt-0.5"></div>
+                        <div>
+                            <p class="font-medium text-red-900">API Key Not Configured</p>
+                            <p class="text-red-700 text-sm mt-1">
+                                Please update your Alpha Vantage API key in <code class="bg-red-100 px-2 py-1 rounded">config.js</code>
+                            </p>
+                            <p class="text-red-600 text-sm mt-2">
+                                The demo will use fallback mock data until you configure your API key.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                statusDiv.className = 'mb-8 p-4 rounded-lg bg-green-50 border border-green-200';
+                statusContent.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-5 h-5 bg-green-500 rounded-full flex-shrink-0 mt-0.5"></div>
+                        <div>
+                            <p class="font-medium text-green-900">API Key Configured</p>
+                            <p class="text-green-700 text-sm mt-1">
+                                Alpha Vantage API key is set. Real-time stock search is enabled.
+                            </p>
+                            <p class="text-green-600 text-sm mt-2">
+                                API Key: ${CONFIG.ALPHA_VANTAGE_API_KEY.substring(0, 8)}...
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function setupSearchDemo() {
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            const apiResponse = document.getElementById('apiResponse');
+
+            let searchTimeout;
+
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+
+                if (query.length < 2) {
+                    searchResults.classList.add('hidden');
+                    apiResponse.textContent = 'No search performed yet. Type in the search box above to see the Alpha Vantage API response.';
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => performSearch(query), 300);
+            });
+        }
+
+        async function performSearch(query) {
+            const searchResults = document.getElementById('searchResults');
+            const apiResponse = document.getElementById('apiResponse');
+
+            // Show loading
+            searchResults.innerHTML = `
+                <div class="flex items-center space-x-2 p-3 bg-slate-50 rounded-lg">
+                    <div class="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-slate-600">Searching Alpha Vantage API...</span>
+                </div>
+            `;
+            searchResults.classList.remove('hidden');
+            apiResponse.textContent = 'Loading...';
+
+            try {
+                const url = `${CONFIG.ALPHA_VANTAGE_BASE_URL}?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(query)}&apikey=${CONFIG.ALPHA_VANTAGE_API_KEY}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // Display raw API response
+                apiResponse.textContent = JSON.stringify(data, null, 2);
+
+                // Process and display results
+                if (data['Error Message']) {
+                    searchResults.innerHTML = `
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p class="text-red-800 font-medium">API Error</p>
+                            <p class="text-red-600 text-sm">${data['Error Message']}</p>
+                        </div>
+                    `;
+                } else if (data['Note']) {
+                    searchResults.innerHTML = `
+                        <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p class="text-yellow-800 font-medium">API Limit Reached</p>
+                            <p class="text-yellow-600 text-sm">${data['Note']}</p>
+                        </div>
+                    `;
+                } else if (data['bestMatches'] && data['bestMatches'].length > 0) {
+                    displaySearchResults(data['bestMatches']);
+                } else {
+                    searchResults.innerHTML = `
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                            <p class="text-slate-600">No results found for "${query}"</p>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Search error:', error);
+                
+                apiResponse.textContent = `Error: ${error.message}`;
+                
+                searchResults.innerHTML = `
+                    <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p class="text-red-800 font-medium">Network Error</p>
+                        <p class="text-red-600 text-sm">Failed to connect to Alpha Vantage API</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displaySearchResults(matches) {
+            const searchResults = document.getElementById('searchResults');
+            
+            const html = matches.slice(0, 8).map(match => {
+                const symbol = match['1. symbol'] || '';
+                const name = match['2. name'] || '';
+                const type = match['3. type'] || '';
+                const region = match['4. region'] || '';
+                const currency = match['8. currency'] || '';
+                const matchScore = parseFloat(match['9. matchScore'] || '0');
+
+                return `
+                    <div class="p-4 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                         onclick="selectStock('${symbol}', '${name.replace(/'/g, "\\'")}')">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="font-semibold text-slate-900">${symbol}</div>
+                                <div class="text-slate-600 text-sm mt-1">${name}</div>
+                                <div class="flex items-center space-x-2 mt-2 text-xs text-slate-500">
+                                    <span class="bg-slate-100 px-2 py-1 rounded">${type}</span>
+                                    ${region ? `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded">${region}</span>` : ''}
+                                    ${currency ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded">${currency}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-medium text-slate-700">Match Score</div>
+                                <div class="text-lg font-bold text-indigo-600">${(matchScore * 100).toFixed(0)}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            searchResults.innerHTML = html;
+        }
+
+        function selectStock(symbol, name) {
+            alert(`Selected: ${symbol} - ${name}\n\nIn the full Homebroker, this would load detailed stock information and charts.`);
+        }
+    </script>
+</body>
+</html>

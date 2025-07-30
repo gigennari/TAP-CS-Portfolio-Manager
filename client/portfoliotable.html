@@ -1,8 +1,143 @@
-<div class="w-full max-w-2xl bg-white shadow-xl rounded-2xl">
-    <header class="px-4 py-3 border-b border-slate-200">
-        <h2 class="font-semibold text-slate-900">My Wallet</h2>
-    </header>
-    <div class="p-3">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Portfolio Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Total Portfolio Value</p>
+                        <p class="text-3xl font-bold text-slate-900" id="totalValue">$1,234,567.89</p>
+                        <p class="text-emerald-500 text-sm font-medium mt-1">+2.34% (24h)</p>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">24h Change</p>
+                        <p class="text-3xl font-bold text-emerald-600">+$28,945.12</p>
+                        <p class="text-slate-500 text-sm font-medium mt-1">vs Fed Rate: +1.2%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Total Assets</p>
+                        <p class="text-3xl font-bold text-slate-900">5</p>
+                        <p class="text-slate-500 text-sm font-medium mt-1">Crypto Holdings</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Performance Chart -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-slate-900">Portfolio vs Fed Funds Rate</h3>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg font-medium">7D</button>
+                        <button class="px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">30D</button>
+                        <button class="px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">90D</button>
+                    </div>
+                </div>
+                <div class="h-80">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Sector Allocation Pie Chart -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-slate-900">Asset Allocation</h3>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                        <span class="text-sm text-slate-600">Crypto</span>
+                    </div>
+                </div>
+                <div class="h-80 flex items-center justify-center">
+                    <canvas id="sectorChart"></canvas>
+                </div>
+                <div class="mt-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-slate-700">Bitcoin (BTC)</span>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-900">45.2%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-slate-700">Solana (SOL)</span>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-900">23.1%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-pink-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-slate-700">Polkadot (DOT)</span>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-900">15.7%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-slate-700">Bitcoin Cash (BCH)</span>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-900">10.4%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-slate-700">Cardano (ADA)</span>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-900">5.6%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio Table -->
+        <div class="bg-white shadow-xl rounded-2xl">
+            <header class="px-6 py-4 border-b border-slate-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-slate-900">My Wallet</h2>
+                    <a href="homebroker.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium inline-block text-center">
+                        Add Asset
+                    </a>
+                </div>
+            </header>
+            <div class="p-6">
 
         <!-- Table -->
         <div class="overflow-x-auto">
@@ -18,6 +153,9 @@
                         </th>
                         <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r last:pl-5 last:sticky last:right-0">
                             <div class="font-medium text-left">Symbol</div>
+                        </th>
+                        <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r last:pl-5 last:sticky last:right-0">
+                            <div class="font-medium text-left">Quantity</div>
                         </th>
                         <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r last:pl-5 last:sticky last:right-0">
                             <div class="font-medium text-left">Price</div>
@@ -57,6 +195,9 @@
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
                             <div class="text-slate-500">BTC</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
+                            <div class="text-slate-900 font-medium">0.5234</div>
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
                             <div class="text-slate-900">$67,177.77</div>
@@ -118,6 +259,9 @@
                             <div class="text-slate-500">SOL</div>
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
+                            <div class="text-slate-900 font-medium">15.67</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
                             <div class="text-slate-900">$187.50</div>
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
@@ -154,6 +298,9 @@
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
                             <div class="text-slate-500">DOT</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
+                            <div class="text-slate-900 font-medium">234.89</div>
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
                             <div class="text-slate-900">$8.58</div>
@@ -194,6 +341,9 @@
                             <div class="text-slate-500">BCH</div>
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
+                            <div class="text-slate-900 font-medium">2.045</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
                             <div class="text-slate-900">$642.47</div>
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
@@ -232,6 +382,9 @@
                             <div class="text-slate-500">ADA</div>
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
+                            <div class="text-slate-900 font-medium">1,247.33</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
                             <div class="text-slate-900">$0.59</div>
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
@@ -254,7 +407,211 @@
                     </tr>
                 </tbody>
             </table>
-
         </div>
     </div>
 </div>
+
+    </div>
+
+    <script>
+        // Performance Chart - Portfolio vs Fed Funds Rate
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        
+        // Sample data for the last 7 days
+        const dates = [];
+        const portfolioData = [];
+        const fedRateData = [];
+        
+        // Generate sample data
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            
+            // Sample portfolio performance (starting at 100, with some volatility)
+            portfolioData.push(100 + Math.random() * 10 - 5 + (6 - i) * 0.5);
+            
+            // Fed funds rate (relatively stable around 5.25%)
+            fedRateData.push(5.25 + Math.random() * 0.1 - 0.05);
+        }
+
+        new Chart(performanceCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Portfolio Performance (%)',
+                        data: portfolioData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    },
+                    {
+                        label: 'Fed Funds Rate (%)',
+                        data: fedRateData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#374151',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: true
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: '#f1f5f9'
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                size: 11
+                            },
+                            callback: function(value) {
+                                return value.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+
+        // Sector Allocation Pie Chart
+        const sectorCtx = document.getElementById('sectorChart').getContext('2d');
+        
+        new Chart(sectorCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Bitcoin (BTC)', 'Solana (SOL)', 'Polkadot (DOT)', 'Bitcoin Cash (BCH)', 'Cardano (ADA)'],
+                datasets: [{
+                    data: [45.2, 23.1, 15.7, 10.4, 5.6],
+                    backgroundColor: [
+                        '#f97316', // Orange for Bitcoin
+                        '#8b5cf6', // Purple for Solana
+                        '#ec4899', // Pink for Polkadot
+                        '#10b981', // Green for Bitcoin Cash
+                        '#3b82f6'  // Blue for Cardano
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#374151',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + '%';
+                            }
+                        }
+                    }
+                },
+                cutout: '60%',
+                animation: {
+                    animateRotate: true,
+                    duration: 1000
+                }
+            }
+        });
+
+        // Add some interactivity to the table rows
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableRows = document.querySelectorAll('tbody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8fafc';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+
+            // Simulate real-time price updates
+            function updatePrices() {
+                const priceElements = document.querySelectorAll('tbody tr td:nth-child(5) div');
+                priceElements.forEach(element => {
+                    const currentPrice = parseFloat(element.textContent.replace('$', '').replace(',', ''));
+                    const change = (Math.random() - 0.5) * 0.02; // ±1% change
+                    const newPrice = currentPrice * (1 + change);
+                    element.textContent = '$' + newPrice.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                });
+            }
+
+            // Update prices every 30 seconds
+            setInterval(updatePrices, 30000);
+        });
+
+        // Add smooth scrolling for better UX
+        document.documentElement.style.scrollBehavior = 'smooth';
+    </script>
+</body>
+</html>

@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Trading - Homebroker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="config.js"></script>
+    <style>
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .stock-card {
+            transition: all 0.3s ease;
+        }
+        .stock-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900">Stock Trading</h1>
+                <p class="text-slate-600 mt-1">Search and trade stocks with real-time data</p>
+            </div>
+            <a href="portfoliotable.html" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium">
+                ← Back to Portfolio
+            </a>
+        </div>
+
+        <!-- Search Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-slate-900 mb-4">Search Stocks</h2>
+            <div class="relative">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1 relative">
+                        <input 
+                            type="text" 
+                            id="stockSearch" 
+                            placeholder="Search for stocks (e.g., AAPL, MSFT, TSLA...)" 
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                        >
+                        <div id="searchResults" class="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg mt-1 shadow-lg z-10 hidden search-results">
+                            <!-- Search results will be populated here -->
+                        </div>
+                    </div>
+                    <button 
+                        id="searchBtn" 
+                        class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center space-x-2"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <span>Search</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Information Section -->
+        <div id="stockInfo" class="hidden">
+            <!-- Stock Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-2xl shadow-lg p-6 stock-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 text-sm font-medium">Current Price</p>
+                            <p class="text-2xl font-bold text-slate-900" id="currentPrice">$0.00</p>
+                            <p class="text-sm font-medium mt-1" id="priceChange">+0.00 (0.00%)</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6 stock-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 text-sm font-medium">Market Cap</p>
+                            <p class="text-2xl font-bold text-slate-900" id="marketCap">$0</p>
+                            <p class="text-slate-500 text-sm font-medium mt-1">Total Value</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6 stock-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 text-sm font-medium">P/E Ratio</p>
+                            <p class="text-2xl font-bold text-slate-900" id="peRatio">0.00</p>
+                            <p class="text-slate-500 text-sm font-medium mt-1">Price/Earnings</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6 stock-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 text-sm font-medium">Volume</p>
+                            <p class="text-2xl font-bold text-slate-900" id="volume">0</p>
+                            <p class="text-slate-500 text-sm font-medium mt-1">Daily Volume</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Stock Chart -->
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-900" id="stockTitle">Stock Performance</h3>
+                            <p class="text-slate-600" id="stockSymbol">Select a stock to view chart</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg font-medium period-btn" data-period="1D">1D</button>
+                            <button class="px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg period-btn" data-period="5D">5D</button>
+                            <button class="px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg period-btn" data-period="1M">1M</button>
+                            <button class="px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg period-btn" data-period="3M">3M</button>
+                            <button class="px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg period-btn" data-period="1Y">1Y</button>
+                        </div>
+                    </div>
+                    <div class="h-96">
+                        <canvas id="stockChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Trading Panel -->
+                <div class="space-y-6">
+                    <!-- Stock Details -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-4">Stock Details</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Company:</span>
+                                <span class="font-medium text-slate-900" id="companyName">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Sector:</span>
+                                <span class="font-medium text-slate-900" id="sector">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Industry:</span>
+                                <span class="font-medium text-slate-900" id="industry">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">52W High:</span>
+                                <span class="font-medium text-slate-900" id="high52">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">52W Low:</span>
+                                <span class="font-medium text-slate-900" id="low52">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Dividend Yield:</span>
+                                <span class="font-medium text-slate-900" id="dividendYield">0.00%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trading Form -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-4">Trade Stock</h3>
+                        <form id="tradeForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Action</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button type="button" id="buyBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                        Buy
+                                    </button>
+                                    <button type="button" id="sellBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                                        Sell
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="quantity" class="block text-sm font-medium text-slate-700 mb-2">Quantity</label>
+                                <input 
+                                    type="number" 
+                                    id="quantity" 
+                                    min="0.001" 
+                                    step="0.001" 
+                                    placeholder="Enter quantity"
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Order Type</label>
+                                <select id="orderType" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                    <option value="market">Market Order</option>
+                                    <option value="limit">Limit Order</option>
+                                </select>
+                            </div>
+                            
+                            <div id="limitPriceDiv" class="hidden">
+                                <label for="limitPrice" class="block text-sm font-medium text-slate-700 mb-2">Limit Price</label>
+                                <input 
+                                    type="number" 
+                                    id="limitPrice" 
+                                    min="0.01" 
+                                    step="0.01" 
+                                    placeholder="Enter limit price"
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                >
+                            </div>
+                            
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-600">Estimated Total:</span>
+                                    <span class="font-medium text-slate-900" id="estimatedTotal">$0.00</span>
+                                </div>
+                            </div>
+                            
+                            <button 
+                                type="submit" 
+                                id="submitTradeBtn"
+                                class="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled
+                            >
+                                Place Order
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+                <div class="loading-spinner"></div>
+                <span class="text-slate-700">Loading stock data...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - loaded from config.js
+        const API_BASE = CONFIG.API_BASE;
+        const ALPHA_VANTAGE_API_KEY = CONFIG.ALPHA_VANTAGE_API_KEY;
+        const ALPHA_VANTAGE_BASE_URL = CONFIG.ALPHA_VANTAGE_BASE_URL;
+        
+        // Global variables
+        let currentStock = null;
+        let stockChart = null;
+        let tradeAction = 'buy';
+        
+        // DOM elements
+        const stockSearch = document.getElementById('stockSearch');
+        const searchResults = document.getElementById('searchResults');
+        const searchBtn = document.getElementById('searchBtn');
+        const stockInfo = document.getElementById('stockInfo');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const buyBtn = document.getElementById('buyBtn');
+        const sellBtn = document.getElementById('sellBtn');
+        const quantity = document.getElementById('quantity');
+        const orderType = document.getElementById('orderType');
+        const limitPriceDiv = document.getElementById('limitPriceDiv');
+        const estimatedTotal = document.getElementById('estimatedTotal');
+        const submitTradeBtn = document.getElementById('submitTradeBtn');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Validate configuration
+            validateConfig();
+            
+            setupEventListeners();
+            initializeChart();
+        });
+        
+        function setupEventListeners() {
+            // Search functionality
+            stockSearch.addEventListener('input', debounce(handleSearchInput, CONFIG.SEARCH_DEBOUNCE_MS));
+            searchBtn.addEventListener('click', handleSearch);
+            stockSearch.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+            
+            // Trading form
+            buyBtn.addEventListener('click', () => setTradeAction('buy'));
+            sellBtn.addEventListener('click', () => setTradeAction('sell'));
+            quantity.addEventListener('input', updateEstimatedTotal);
+            orderType.addEventListener('change', handleOrderTypeChange);
+            document.getElementById('tradeForm').addEventListener('submit', handleTradeSubmit);
+            
+            // Period buttons
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.period-btn').forEach(b => {
+                        b.className = 'px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg period-btn';
+                    });
+                    this.className = 'px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg font-medium period-btn';
+                    if (currentStock) {
+                        loadStockChart(currentStock.symbol, this.dataset.period);
+                    }
+                });
+            });
+            
+            // Click outside to close search results
+            document.addEventListener('click', function(e) {
+                if (!stockSearch.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.classList.add('hidden');
+                }
+            });
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        async function handleSearchInput() {
+            const query = stockSearch.value.trim();
+            if (query.length < CONFIG.MIN_SEARCH_LENGTH) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+            
+            // Show loading indicator
+            searchResults.innerHTML = `
+                <div class="px-4 py-3 flex items-center space-x-2">
+                    <div class="loading-spinner"></div>
+                    <span class="text-slate-600 text-sm">Searching stocks...</span>
+                </div>
+            `;
+            searchResults.classList.remove('hidden');
+            
+            try {
+                // Try Alpha Vantage API first
+                const results = await searchStocksAlphaVantage(query);
+                if (results && results.length > 0) {
+                    displaySearchResults(results);
+                } else {
+                    // Fallback to backend API
+                    try {
+                        const response = await fetch(`${API_BASE}/search?query=${encodeURIComponent(query)}`);
+                        const data = await response.json();
+                        
+                        if (data.results && data.results.length > 0) {
+                            displaySearchResults(data.results);
+                        } else {
+                            // Final fallback to mock data
+                            const mockResults = await mockSearchStocks(query);
+                            displaySearchResults(mockResults);
+                        }
+                    } catch (backendError) {
+                        console.warn('Backend API unavailable, using mock data:', backendError);
+                        const mockResults = await mockSearchStocks(query);
+                        displaySearchResults(mockResults);
+                    }
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                // Fallback to mock data
+                const results = await mockSearchStocks(query);
+                displaySearchResults(results);
+            }
+        }
+        
+        async function searchStocksAlphaVantage(query) {
+            try {
+                // Check if API key is configured
+                if (ALPHA_VANTAGE_API_KEY === 'YD0AVPAM5ADQLFPS') {
+                    console.warn('Alpha Vantage API key not configured. Using fallback.');
+                    return null;
+                }
+                
+                // Alpha Vantage SYMBOL_SEARCH endpoint
+                const url = `${ALPHA_VANTAGE_BASE_URL}?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(query)}&apikey=${ALPHA_VANTAGE_API_KEY}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // Check for API errors
+                if (data['Error Message']) {
+                    console.error('Alpha Vantage API Error:', data['Error Message']);
+                    return null;
+                }
+                
+                if (data['Note']) {
+                    console.warn('Alpha Vantage API Note:', data['Note']);
+                    return null;
+                }
+                
+                // Parse the results
+                if (data['bestMatches'] && Array.isArray(data['bestMatches'])) {
+                    return data['bestMatches'].map(match => ({
+                        symbol: match['1. symbol'] || '',
+                        name: match['2. name'] || '',
+                        type: match['3. type'] || 'Equity',
+                        region: match['4. region'] || '',
+                        marketOpen: match['5. marketOpen'] || '',
+                        marketClose: match['6. marketClose'] || '',
+                        timezone: match['7. timezone'] || '',
+                        currency: match['8. currency'] || 'USD',
+                        matchScore: match['9. matchScore'] || '0.0000'
+                    })).slice(0, CONFIG.MAX_SEARCH_RESULTS);
+                }
+                
+                return [];
+                
+            } catch (error) {
+                console.error('Alpha Vantage API request failed:', error);
+                return null;
+            }
+        }
+        
+        async function mockSearchStocks(query) {
+            // Enhanced mock data for demonstration when API is unavailable
+            const mockStocks = [
+                { symbol: 'AAPL', name: 'Apple Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'MSFT', name: 'Microsoft Corporation', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'GOOGL', name: 'Alphabet Inc. Class A', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'AMZN', name: 'Amazon.com Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'TSLA', name: 'Tesla Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'META', name: 'Meta Platforms Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'NVDA', name: 'NVIDIA Corporation', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'NFLX', name: 'Netflix Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'AMD', name: 'Advanced Micro Devices Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'INTC', name: 'Intel Corporation', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'CRM', name: 'Salesforce Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'ORCL', name: 'Oracle Corporation', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'ADBE', name: 'Adobe Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'PYPL', name: 'PayPal Holdings Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'DIS', name: 'The Walt Disney Company', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'UBER', name: 'Uber Technologies Inc.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'SPOT', name: 'Spotify Technology S.A.', type: 'Equity', region: 'United States', currency: 'USD' },
+                { symbol: 'ZOOM', name: 'Zoom Video Communications Inc.', type: 'Equity', region: 'United States', currency: 'USD' }
+            ];
+            
+            return mockStocks.filter(stock => 
+                stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
+                stock.name.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, CONFIG.MAX_SEARCH_RESULTS);
+        }
+        
+        function displaySearchResults(results) {
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="px-4 py-3 text-slate-500 text-sm">No results found</div>';
+                searchResults.classList.remove('hidden');
+                return;
+            }
+            
+            const html = results.map(stock => {
+                // Handle both Alpha Vantage and mock data formats
+                const region = stock.region ? ` • ${stock.region}` : '';
+                const currency = stock.currency && stock.currency !== 'USD' ? ` (${stock.currency})` : '';
+                const matchScore = stock.matchScore ? parseFloat(stock.matchScore) : 1.0;
+                
+                return `
+                    <div class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0" 
+                         onclick="selectStock('${stock.symbol}', '${stock.name.replace(/'/g, "\\'")}')">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-slate-900">${stock.symbol}</div>
+                                <div class="text-sm text-slate-600 truncate">${stock.name}</div>
+                                <div class="text-xs text-slate-400 mt-1">
+                                    ${stock.type}${region}${currency}
+                                    ${matchScore < 1.0 ? ` • Match: ${(matchScore * 100).toFixed(0)}%` : ''}
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end text-xs text-slate-500 ml-2">
+                                <span class="font-medium">${stock.type}</span>
+                                ${stock.region ? `<span class="mt-1">${stock.region}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            searchResults.innerHTML = html;
+            searchResults.classList.remove('hidden');
+        }
+        
+        async function selectStock(symbol, name) {
+            searchResults.classList.add('hidden');
+            stockSearch.value = `${symbol} - ${name}`;
+            await loadStockData(symbol);
+        }
+        
+        async function handleSearch() {
+            const query = stockSearch.value.trim().split(' ')[0]; // Get symbol part
+            if (query) {
+                await loadStockData(query.toUpperCase());
+            }
+        }
+        
+        async function loadStockData(symbol) {
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`${API_BASE}/stock/${symbol}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const stockData = await response.json();
+                currentStock = stockData;
+                
+                displayStockInfo(stockData);
+                await loadStockChart(symbol, '1D');
+                
+                stockInfo.classList.remove('hidden');
+                submitTradeBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Error loading stock data:', error);
+                
+                // Fallback to mock data
+                try {
+                    const stockData = await mockGetStockData(symbol);
+                    currentStock = stockData;
+                    displayStockInfo(stockData);
+                    await loadStockChart(symbol, '1D');
+                    stockInfo.classList.remove('hidden');
+                    submitTradeBtn.disabled = false;
+                } catch (mockError) {
+                    alert('Error loading stock data. Please try again.');
+                }
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        async function mockGetStockData(symbol) {
+            // Mock data for demonstration
+            const mockData = {
+                symbol: symbol,
+                name: getCompanyName(symbol),
+                currentPrice: Math.random() * 200 + 50,
+                change: (Math.random() - 0.5) * 10,
+                changePercent: (Math.random() - 0.5) * 5,
+                marketCap: Math.random() * 1000000000000 + 100000000000,
+                peRatio: Math.random() * 30 + 10,
+                volume: Math.random() * 100000000 + 10000000,
+                sector: getSector(symbol),
+                industry: getIndustry(symbol),
+                high52: Math.random() * 250 + 100,
+                low52: Math.random() * 100 + 20,
+                dividendYield: Math.random() * 5
+            };
+            
+            mockData.changePercent = (mockData.change / mockData.currentPrice) * 100;
+            
+            return mockData;
+        }
+        
+        function getCompanyName(symbol) {
+            const names = {
+                'AAPL': 'Apple Inc.',
+                'MSFT': 'Microsoft Corporation',
+                'GOOGL': 'Alphabet Inc.',
+                'AMZN': 'Amazon.com Inc.',
+                'TSLA': 'Tesla Inc.',
+                'META': 'Meta Platforms Inc.',
+                'NVDA': 'NVIDIA Corporation',
+                'NFLX': 'Netflix Inc.',
+                'AMD': 'Advanced Micro Devices Inc.',
+                'INTC': 'Intel Corporation'
+            };
+            return names[symbol] || `${symbol} Corporation`;
+        }
+        
+        function getSector(symbol) {
+            const sectors = {
+                'AAPL': 'Technology',
+                'MSFT': 'Technology',
+                'GOOGL': 'Technology',
+                'AMZN': 'Consumer Discretionary',
+                'TSLA': 'Consumer Discretionary',
+                'META': 'Technology',
+                'NVDA': 'Technology',
+                'NFLX': 'Communication Services',
+                'AMD': 'Technology',
+                'INTC': 'Technology'
+            };
+            return sectors[symbol] || 'Technology';
+        }
+        
+        function getIndustry(symbol) {
+            const industries = {
+                'AAPL': 'Consumer Electronics',
+                'MSFT': 'Software',
+                'GOOGL': 'Internet Content & Information',
+                'AMZN': 'Internet Retail',
+                'TSLA': 'Auto Manufacturers',
+                'META': 'Internet Content & Information',
+                'NVDA': 'Semiconductors',
+                'NFLX': 'Entertainment',
+                'AMD': 'Semiconductors',
+                'INTC': 'Semiconductors'
+            };
+            return industries[symbol] || 'Software';
+        }
+        
+        function displayStockInfo(data) {
+            document.getElementById('currentPrice').textContent = `$${data.currentPrice.toFixed(2)}`;
+            document.getElementById('priceChange').textContent = 
+                `${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)} (${data.changePercent.toFixed(2)}%)`;
+            document.getElementById('priceChange').className = 
+                `text-sm font-medium mt-1 ${data.change >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            
+            document.getElementById('marketCap').textContent = formatLargeNumber(data.marketCap);
+            document.getElementById('peRatio').textContent = data.peRatio.toFixed(2);
+            document.getElementById('volume').textContent = formatLargeNumber(data.volume);
+            
+            document.getElementById('stockTitle').textContent = `${data.name} (${data.symbol})`;
+            document.getElementById('stockSymbol').textContent = `${data.symbol} Stock Performance`;
+            
+            document.getElementById('companyName').textContent = data.name;
+            document.getElementById('sector').textContent = data.sector;
+            document.getElementById('industry').textContent = data.industry;
+            document.getElementById('high52').textContent = `$${data.high52.toFixed(2)}`;
+            document.getElementById('low52').textContent = `$${data.low52.toFixed(2)}`;
+            document.getElementById('dividendYield').textContent = `${data.dividendYield.toFixed(2)}%`;
+        }
+        
+        function formatLargeNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return num.toFixed(0);
+        }
+        
+        function initializeChart() {
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            stockChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Stock Price',
+                        data: [],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Price: $${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#64748b',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: '#f1f5f9'
+                            },
+                            ticks: {
+                                color: '#64748b',
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+        
+        async function loadStockChart(symbol, period) {
+            if (!stockChart) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/stock/${symbol}/history?frontend_period=${period}`);
+                
+                if (response.ok) {
+                    const chartData = await response.json();
+                    stockChart.data.labels = chartData.labels;
+                    stockChart.data.datasets[0].data = chartData.data;
+                    stockChart.update();
+                } else {
+                    // Fallback to mock data
+                    const chartData = generateMockChartData(period);
+                    stockChart.data.labels = chartData.labels;
+                    stockChart.data.datasets[0].data = chartData.data;
+                    stockChart.update();
+                }
+            } catch (error) {
+                console.error('Error loading chart data:', error);
+                // Fallback to mock data
+                const chartData = generateMockChartData(period);
+                stockChart.data.labels = chartData.labels;
+                stockChart.data.datasets[0].data = chartData.data;
+                stockChart.update();
+            }
+        }
+        
+        function generateMockChartData(period) {
+            const periods = {
+                '1D': { points: 24, interval: 'hour' },
+                '5D': { points: 5, interval: 'day' },
+                '1M': { points: 30, interval: 'day' },
+                '3M': { points: 90, interval: 'day' },
+                '1Y': { points: 365, interval: 'day' }
+            };
+            
+            const config = periods[period] || periods['1D'];
+            const labels = [];
+            const data = [];
+            const basePrice = currentStock ? currentStock.currentPrice : 100;
+            
+            for (let i = 0; i < config.points; i++) {
+                const date = new Date();
+                if (config.interval === 'hour') {
+                    date.setHours(date.getHours() - (config.points - i));
+                    labels.push(date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+                } else {
+                    date.setDate(date.getDate() - (config.points - i));
+                    labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                }
+                
+                // Generate realistic price movement
+                const volatility = 0.02; // 2% volatility
+                const trend = (Math.random() - 0.5) * 0.001; // Small trend
+                const price = basePrice * (1 + (Math.random() - 0.5) * volatility + trend * i);
+                data.push(price);
+            }
+            
+            return { labels, data };
+        }
+        
+        function setTradeAction(action) {
+            tradeAction = action;
+            if (action === 'buy') {
+                buyBtn.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium';
+                sellBtn.className = 'px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400 transition-colors font-medium';
+            } else {
+                sellBtn.className = 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium';
+                buyBtn.className = 'px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400 transition-colors font-medium';
+            }
+            updateEstimatedTotal();
+        }
+        
+        function handleOrderTypeChange() {
+            if (orderType.value === 'limit') {
+                limitPriceDiv.classList.remove('hidden');
+            } else {
+                limitPriceDiv.classList.add('hidden');
+            }
+            updateEstimatedTotal();
+        }
+        
+        function updateEstimatedTotal() {
+            if (!currentStock || !quantity.value) {
+                estimatedTotal.textContent = '$0.00';
+                return;
+            }
+            
+            const qty = parseFloat(quantity.value);
+            const price = orderType.value === 'limit' && document.getElementById('limitPrice').value 
+                ? parseFloat(document.getElementById('limitPrice').value)
+                : currentStock.currentPrice;
+            
+            const total = qty * price;
+            estimatedTotal.textContent = `$${total.toFixed(2)}`;
+        }
+        
+        async function handleTradeSubmit(e) {
+            e.preventDefault();
+            
+            if (!currentStock || !quantity.value) {
+                alert('Please select a stock and enter quantity');
+                return;
+            }
+            
+            const tradeData = {
+                symbol: currentStock.symbol,
+                action: tradeAction,
+                quantity: parseFloat(quantity.value),
+                orderType: orderType.value,
+                limitPrice: orderType.value === 'limit' ? parseFloat(document.getElementById('limitPrice').value) : null,
+                estimatedPrice: currentStock.currentPrice
+            };
+            
+            // Show confirmation
+            const confirmMessage = `Confirm ${tradeAction.toUpperCase()} order:\n\n` +
+                `Stock: ${currentStock.symbol}\n` +
+                `Quantity: ${tradeData.quantity}\n` +
+                `Order Type: ${tradeData.orderType}\n` +
+                `Estimated Total: ${estimatedTotal.textContent}`;
+            
+            if (confirm(confirmMessage)) {
+                try {
+                    showLoading(true);
+                    
+                    // Mock API call - replace with actual backend call
+                    await mockExecuteTrade(tradeData);
+                    
+                    alert('Order placed successfully!');
+                    
+                    // Reset form
+                    document.getElementById('tradeForm').reset();
+                    setTradeAction('buy');
+                    estimatedTotal.textContent = '$0.00';
+                    
+                } catch (error) {
+                    console.error('Trade execution error:', error);
+                    alert('Error placing order. Please try again.');
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+        
+        async function mockExecuteTrade(tradeData) {
+            try {
+                const response = await fetch(`${API_BASE}/trade`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(tradeData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                return result;
+                
+            } catch (error) {
+                console.error('Trade execution error:', error);
+                
+                // Fallback to mock execution
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log('Trade executed (mock):', tradeData);
+                return { success: true, orderId: Math.random().toString(36).substr(2, 9) };
+            }
+        }
+        
+        function showLoading(show) {
+            if (show) {
+                loadingIndicator.classList.remove('hidden');
+            } else {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
