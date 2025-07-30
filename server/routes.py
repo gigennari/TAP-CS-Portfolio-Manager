@@ -3,6 +3,7 @@ import yfinance as yf
 import requests
 import os
 from datetime import datetime, timedelta
+from db import init_db
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
@@ -10,9 +11,16 @@ portfolio_bp = Blueprint('portfolio', __name__)
 ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY', 'YOUR_API_KEY_HERE')
 ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query'
 
+
 @portfolio_bp.route('/balance', methods=['GET'])
 def get_balance():
+    
+    
     # Implementation for getting portfolio balance
+    cursor = init_db().cursor(dictionary=True)
+    user_id = request.args.get('user_id')
+       
+    cursor.execute("SELECT balance FROM accounts WHERE user_id = %s", (user_id,))
     return jsonify({"balance": 10000.00})
 
 @portfolio_bp.route('/buy', methods=['POST'])
@@ -20,6 +28,7 @@ def buy_stock():
     # Implementation for buying stocks
     data = request.get_json()
     return jsonify({"success": True, "message": "Stock purchased successfully"})
+
 
 @portfolio_bp.route('/sell', methods=['POST'])
 def sell_stock():
