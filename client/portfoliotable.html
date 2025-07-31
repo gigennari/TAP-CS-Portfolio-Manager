@@ -9,6 +9,57 @@
     <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
+    <!-- Header with User Selection -->
+    <header class="bg-white shadow-sm border-b border-slate-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">Portfolio Dashboard</h1>
+                    <p class="text-slate-600 text-sm mt-1">Manage your investment portfolio</p>
+                </div>
+                
+                <!-- User Selection Dropdown -->
+                <div class="relative">
+                    <button 
+                        id="userDropdownBtn" 
+                        class="flex items-center space-x-3 bg-slate-100 hover:bg-slate-200 rounded-lg px-4 py-2 transition-colors"
+                    >
+                        <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-left">
+                            <div class="text-sm font-medium text-slate-900" id="selectedUserName">Select User</div>
+                            <div class="text-xs text-slate-500" id="selectedUserEmail">No user selected</div>
+                        </div>
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div 
+                        id="userDropdownMenu" 
+                        class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-slate-200 z-50 hidden"
+                    >
+                        <div class="p-3 border-b border-slate-200">
+                            <h3 class="text-sm font-medium text-slate-900">Select User</h3>
+                            <p class="text-xs text-slate-500 mt-1">Choose a user to view their portfolio</p>
+                        </div>
+                        <div id="usersList" class="max-h-64 overflow-y-auto">
+                            <!-- Users will be populated here -->
+                            <div class="p-4 text-center text-slate-500">
+                                <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                                <span class="text-sm">Loading users...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
     <div class="container mx-auto px-4 py-8">
         <!-- Portfolio Overview Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -161,7 +212,7 @@
                             <div class="font-medium text-left">Price</div>
                         </th>
                         <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r last:pl-5 last:sticky last:right-0">
-                            <div class="font-medium text-left">Supply</div>
+                            <div class="font-medium text-left">Market Value</div>
                         </th>
                         <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r last:pl-5 last:sticky last:right-0">
                             <div class="font-medium text-left">1h</div>
@@ -179,6 +230,19 @@
                 </thead>
                 <!-- Table body -->
                 <tbody class="text-sm font-medium">
+                    <!-- Portfolio data will be populated here dynamically -->
+                    <tr>
+                        <td colspan="10" class="px-5 py-8 text-center text-slate-500">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <p class="text-lg font-medium">Select a user to view portfolio</p>
+                                <p class="text-sm">Choose a user from the dropdown above</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
                     <!-- Row -->
                     <tr>
                         <td class="px-5 py-3 border-b border-slate-200 last:border-none first:pl-3 last:pr-3 last:bg-gradient-to-r last:from-transparent last:to-white last:to-[12px] last:pl-5 last:sticky last:right-0">
@@ -413,6 +477,310 @@
 
     </div>
     <script>
+        // Global variables
+        let currentUserId = null;
+        let currentUser = null;
+        const API_BASE = 'http://localhost:5000';
+
+        // User Management Functions
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/users`);
+                const data = await response.json();
+                
+                if (data.users) {
+                    populateUsersDropdown(data.users);
+                } else {
+                    console.error('No users data received');
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showUserError('Failed to load users');
+            }
+        }
+
+        function populateUsersDropdown(users) {
+            const usersList = document.getElementById('usersList');
+            
+            if (users.length === 0) {
+                usersList.innerHTML = `
+                    <div class="p-4 text-center text-slate-500">
+                        <span class="text-sm">No users found</span>
+                    </div>
+                `;
+                return;
+            }
+
+            const usersHTML = users.map(user => `
+                <div class="user-item p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0" 
+                     onclick="selectUser('${user.id}', '${user.username}', '${user.name}', '${user.email}', '${user.account_id}')">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">
+                                ${(user.name || user.username || 'U').charAt(0).toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium text-slate-900">
+                                ${user.name}
+                            </div>
+                            <div class="text-xs text-slate-500 truncate">${user.email}</div>
+                            <div class="text-xs text-slate-400">ID: ${user.id}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            usersList.innerHTML = usersHTML;
+        }
+
+        function selectUser(id, username, name, email, account_id){
+            currentUserId = id;
+            currentUser = {
+                user_id: id,
+                username: username,
+                email: email,
+                name: name,
+                account_id: account_id
+            };
+
+            // Update UI
+            const displayName = name;
+            document.getElementById('selectedUserName').textContent = displayName;
+            document.getElementById('selectedUserEmail').textContent = email;
+
+            // Close dropdown
+            document.getElementById('userDropdownMenu').classList.add('hidden');
+
+            // Load user's portfolio data
+            loadUserPortfolio(id);
+            
+            console.log('Selected user:', currentUser);
+        }
+
+       async function loadUserPortfolio(user_id) {
+            try {
+                showPortfolioLoading(true);
+
+                const walletResponse = await fetch(`${API_BASE}/wallet?user_id=${user_id}`);
+                const walletData = await walletResponse.json();
+
+                if (walletData.wallet) {
+                document.getElementById('totalValue').textContent = 
+                    `$${walletData.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                const totalAssetsElement = document.querySelector('.grid .bg-white:nth-child(3) .text-3xl');
+                if (totalAssetsElement) totalAssetsElement.textContent = walletData.count;
+
+                populateWalletTable(walletData.wallet);
+                updatePortfolioSummary(walletData.wallet, walletData.totalValue);
+                } else {
+                console.error('No wallet data received');
+                populateWalletTable([]);
+                }
+
+                const balanceResponse = await fetch(`${API_BASE}/balance?user_id=${user_id}`);
+                const balanceData = await balanceResponse.json();
+                if (balanceData.balance !== undefined) {
+                console.log('User cash balance:', balanceData.balance);
+                }
+
+            } catch (error) {
+                console.error('Error loading user portfolio:', error);
+                showPortfolioError('Failed to load portfolio data');
+            } finally {
+                showPortfolioLoading(false);
+            }
+            }
+
+        function populateWalletTable(walletData) {
+            const tableBody = document.querySelector('tbody');
+            
+            if (!walletData || walletData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-5 py-8 text-center text-slate-500">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8l-2-2m0 0l-2 2m2-2v6m-6 6l2 2m0 0l2-2m-2 2V9"></path>
+                                </svg>
+                                <p class="text-lg font-medium">No stocks in portfolio</p>
+                                <p class="text-sm">Start trading to build your portfolio</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const tableHTML = walletData.map((stock, index) => {
+                const gainLossClass = stock.gainLoss >= 0 ? 'text-emerald-600' : 'text-red-600';
+                const change24hClass = stock.change24h >= 0 ? 'text-emerald-600' : 'text-red-600';
+                const change1hClass = stock.change1h >= 0 ? 'text-emerald-600' : 'text-red-600';
+                const change7dClass = stock.change7d >= 0 ? 'text-emerald-600' : 'text-red-600';
+                
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="font-medium text-slate-900">${index + 1}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white text-xs font-bold">${stock.symbol.charAt(0)}</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-900">${stock.name}</div>
+                                    <div class="text-xs text-slate-500">${stock.sector}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="font-medium text-slate-900">${stock.symbol}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="font-medium text-slate-900">${stock.quantity.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="font-medium text-slate-900">$${stock.currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="font-medium text-slate-900">$${stock.marketValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="font-medium ${change1hClass}">${stock.change1h >= 0 ? '+' : ''}${stock.change1h.toFixed(2)}%</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="font-medium ${change24hClass}">${stock.change24h >= 0 ? '+' : ''}${stock.change24h.toFixed(2)}%</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="font-medium ${change7dClass}">${stock.change7d >= 0 ? '+' : ''}${stock.change7d.toFixed(2)}%</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <button class="h-8 whitespace-nowrap justify-center rounded-full px-3 py-1 text-sm font-medium text-indigo-500 hover:text-white border border-slate-200 shadow-sm hover:bg-indigo-600 focus-visible:outline-none focus-visible:ring focus-visible:ring-indigo-300 transition-colors group"
+                                    onclick="openTradeModal('${stock.symbol}', '${stock.name}')">
+                                Sell <span class="text-slate-200 group-hover:text-indigo-400 transition-colors">/</span> Buy
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tableBody.innerHTML = tableHTML;
+        }
+
+        function updatePortfolioSummary(walletData, totalValue) {
+            if (!walletData || walletData.length === 0) return;
+            
+            // Calculate total 24h change
+            let totalChange24h = 0;
+            let totalPreviousValue = 0;
+            
+            walletData.forEach(stock => {
+                const previousPrice = stock.currentPrice / (1 + stock.change24h / 100);
+                const previousValue = stock.quantity * previousPrice;
+                totalPreviousValue += previousValue;
+            });
+            
+            totalChange24h = totalValue - totalPreviousValue;
+            const changePercent = totalPreviousValue > 0 ? (totalChange24h / totalPreviousValue * 100) : 0;
+            
+            // Update 24h change card
+            const changeValueElement = document.querySelector('.grid .bg-white:nth-child(2) .text-3xl');
+            const changePercentElement = document.querySelector('.grid .bg-white:nth-child(2) .text-emerald-500');
+            
+            if (changeValueElement) {
+                const changeClass = totalChange24h >= 0 ? 'text-emerald-600' : 'text-red-600';
+                changeValueElement.className = `text-3xl font-bold ${changeClass}`;
+                changeValueElement.textContent = `${totalChange24h >= 0 ? '+' : ''}$${Math.abs(totalChange24h).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+            
+            if (changePercentElement) {
+                const changeClass = changePercent >= 0 ? 'text-emerald-500' : 'text-red-500';
+                changePercentElement.className = `${changeClass} text-sm font-medium mt-1`;
+                changePercentElement.textContent = `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}% (24h)`;
+            }
+        }
+
+        function showPortfolioLoading(show) {
+            const tableBody = document.querySelector('tbody');
+            if (show) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-5 py-8 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                <span class="text-slate-600">Loading portfolio...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function showPortfolioError(message) {
+            const tableBody = document.querySelector('tbody');
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="px-5 py-8 text-center text-red-500">
+                        <div class="flex flex-col items-center">
+                            <svg class="w-12 h-12 text-red-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-lg font-medium">${message}</p>
+                            <button onclick="loadUserPortfolio(currentUserId)" class="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                                Retry
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function openTradeModal(symbol, name) {
+            // Redirect to homebroker with selected stock
+            window.location.href = `homebroker.html?symbol=${symbol}&name=${encodeURIComponent(name)}`;
+        }
+
+        function showUserError(message) {
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = `
+                <div class="p-4 text-center text-red-500">
+                    <svg class="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-sm">${message}</span>
+                </div>
+            `;
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load users on page load
+            loadUsers();
+
+            // User dropdown toggle
+            const userDropdownBtn = document.getElementById('userDropdownBtn');
+            const userDropdownMenu = document.getElementById('userDropdownMenu');
+
+            userDropdownBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdownMenu.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userDropdownBtn.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                    userDropdownMenu.classList.add('hidden');
+                }
+            });
+
+            // Prevent dropdown from closing when clicking inside
+            userDropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+
         // Performance Chart - Portfolio vs Fed Funds Rate
         const performanceCtx = document.getElementById('performanceChart').getContext('2d');
 

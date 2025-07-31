@@ -1,21 +1,24 @@
-CREATE DATABASE bygDB;
+CREATE DATABASE bygdb;
 
-USE bygDB;
+USE bygdb;
 
-CREATE TABLE accounts (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    balance DECIMAL(10, 2) DEFAULT 0.00
-);
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100),
     name VARCHAR(100),
     birth_date DATE,
-    email VARCHAR(100) UNIQUE,
-    account_id INT,
-	FOREIGN KEY (account_id)  REFERENCES accounts(id)
+    email VARCHAR(100) UNIQUE
     );
+
+
+CREATE TABLE accounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    balance DECIMAL(10, 2) DEFAULT 20000.00,
+    user_id INT UNIQUE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 
 CREATE TABLE  portfolios (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -54,18 +57,6 @@ CREATE TABLE stockstransactions (
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-
-
--- (b, tesouro selic), (b, cdb)
--- create table portofoliofixedincome (
---     portfolios_id INT FOREIGN KEY REFERENCES portfolios(id),
---     fixed_income_symbol VARCHAR(10) FOREIGN KEY REFERENCES fixedincome(symbol),
---     maturity_date DATE,
---     interest_rate DECIMAL(5, 2) DEFAULT 0.00,
---     price_paid DECIMAL(10, 2) DEFAULT 0.00,
---     UNIQUE (portfolios_id, fixed_income_symbol)
--- ); 
 
 
 
