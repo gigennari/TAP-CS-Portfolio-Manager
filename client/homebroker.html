@@ -409,13 +409,13 @@
         async function searchStocksAlphaVantage(query) {
             try {
                 // Check if API key is configured
-                if (ALPHA_VANTAGE_API_KEY === 'YD0AVPAM5ADQLFPS') {
+                if (ALPHA_VANTAGE_API_KEY != CONFIG.ALPHA_VANTAGE_API_KEY) {
                     console.warn('Alpha Vantage API key not configured. Using fallback.');
                     return null;
                 }
                 
                 // Alpha Vantage SYMBOL_SEARCH endpoint
-                const url = `${ALPHA_VANTAGE_BASE_URL}?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(query)}&apikey=${ALPHA_VANTAGE_API_KEY}`;
+                const url = `${CONFIG.ALPHA_VANTAGE_BASE_URL}?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(query)}&apikey=${CONFIG.ALPHA_VANTAGE_API_KEY}`;
                 
                 const response = await fetch(url);
                 const data = await response.json();

@@ -4,7 +4,7 @@
 
 const CONFIG = {
     // Alpha Vantage API Configuration
-    ALPHA_VANTAGE_API_KEY: 'YOUR_ALPHA_VANTAGE_API_KEY',
+    ALPHA_VANTAGE_API_KEY: 'YD0AVPAM5ADQLFPS',
     ALPHA_VANTAGE_BASE_URL: 'https://www.alphavantage.co/query',
     
     // Backend API Configuration
