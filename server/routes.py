@@ -3,7 +3,8 @@ import yfinance as yf
 import requests
 import os
 from datetime import datetime, timedelta
-from db import init_db
+from db import init_db, dump_db
+
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
