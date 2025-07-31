@@ -2,20 +2,20 @@ CREATE DATABASE bygDB;
 
 USE bygDB;
 
-CREATE TABLE accounts (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    balance DECIMAL(10, 2) DEFAULT 0.00
-);
-
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100),
     name VARCHAR(100),
     birth_date DATE,
-    email VARCHAR(100) UNIQUE,
-    account_id INT,
-	FOREIGN KEY (account_id)  REFERENCES accounts(id)
+    email VARCHAR(100) UNIQUE
     );
+
+CREATE TABLE accounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    balance DECIMAL(10, 2) DEFAULT 0.00,
+    user_id INT,
+    FOREIGN KEY (user_id)  REFERENCES users(id)
+);
 
 CREATE TABLE  portfolios (
     id INT AUTO_INCREMENT PRIMARY KEY,
