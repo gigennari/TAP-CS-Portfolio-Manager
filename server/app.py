@@ -14,8 +14,12 @@ def portfolio():
     return send_from_directory(app.static_folder, 'portfoliotable.html')
 
 @app.route('/homebroker')
-def static_files():
+def homebroker():
     return send_from_directory(app.static_folder, 'homebroker.html')
+
+@app.route('/test-users')
+def test_users():
+    return send_from_directory(app.static_folder, 'test_users.html')
 
 @app.route('/<path:filename>')
 def serve_static(filename):
