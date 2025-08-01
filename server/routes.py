@@ -13,6 +13,90 @@ portfolio_bp = Blueprint('portfolio', __name__)
 ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY', 'YD0AVPAM5ADQLFPS')
 ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query'
 
+
+#get all users from users table
+@portfolio_bp.route('/users', methods=['GET'])
+def get_users():
+    """Get all users from the users table"""
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users")
+        
+        users = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"users": users})
+        
+    except Exception as e:
+        print(f"Error getting users: {e}")
+        return jsonify({"error": "Failed to get users"}), 500
+
+#get portfolio balance (accounts table)
+@portfolio_bp.route('/balance', methods=['GET'])
+def get_balance():
+    # Implementation for getting portfolio balance
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+           
+        cursor.execute("SELECT balance FROM accounts WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if result:
+            return jsonify({"balance": result['balance']})
+        else:
+            return jsonify({"balance": 0.00})
+            
+    except Exception as e:
+        print(f"Error getting balance: {e}")
+        return jsonify({"error": "Failed to get balance"}), 500
+
+#process transaction (buy/sell) -> REMOVE LIMIT ORDERS 
+#----(request must have user id, qty, current price , stock symbol, type of operation)
+
+
+@portfolio_bp.route('/portfoliovalue', methods=['GET'])
+def get_total_portfolio_value():
+    """Get total portfolio value for a user"""
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+        
+        cursor.execute("""
+            SELECT SUM(sp.quantity * s.current_price) AS total_value
+            FROM stocksportfolio sp
+            JOIN stocks s ON sp.symbol = s.symbol
+            WHERE sp.user_id = %s
+        """, (user_id,))
+        
+        result = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        total_value = result['total_value'] if result['total_value'] else 0.00
+        
+        return jsonify({"totalPortfolioValue": total_value})
+        
+    except Exception as e:
+        print(f"Error getting total portfolio value: {e}")
+        return jsonify({"error": "Failed to get total portfolio value"}), 500
+    
+    
 @portfolio_bp.route('/wallet', methods=['GET'])
 def get_wallet():
     """Get user's wallet/portfolio with current stock prices"""
