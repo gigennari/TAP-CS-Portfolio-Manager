@@ -5,6 +5,9 @@ import os
 from datetime import datetime, timedelta
 from db import init_db, dump_db
 from time import sleep
+import plotly.graph_objects as go #built on javascript, can be used on front end 
+from plotly.subplots import make_subplots
+import pandas as pd
 
 
 portfolio_bp = Blueprint('portfolio', __name__)
@@ -435,36 +438,103 @@ def get_stock_history(symbol):
     except Exception as e:
         print(f"Error getting stock history for {symbol}: {e}")
         return jsonify({"error": f"Failed to get stock history for {symbol}"}), 500
-
-@portfolio_bp.route('/portfolio', methods=['GET'])
-def get_portfolio():
-    """Get user's current portfolio"""
-    # This would typically fetch from database
-    # For now, return mock data
-    portfolio = {
-        "totalValue": 1234567.89,
-        "totalChange": 28945.12,
-        "totalChangePercent": 2.34,
-        "positions": [
-            {
-                "symbol": "BTC-USD",
-                "name": "Bitcoin",
-                "quantity": 0.5234,
-                "currentPrice": 67177.77,
-                "totalValue": 35156.78,
-                "change": 1234.56,
-                "changePercent": 3.64
-            },
-            {
-                "symbol": "SOL-USD", 
-                "name": "Solana",
-                "quantity": 15.67,
-                "currentPrice": 187.50,
-                "totalValue": 2938.13,
-                "change": -45.23,
-                "changePercent": -1.52
-            }
-        ]
-    }
     
-    return jsonify(portfolio)
+    
+@portfolio_bp.route('/historical-data', methods=['GET'])
+def get_historical_data_for_user():
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+
+        # Fetch user's stock transactions
+        query = """
+            SELECT s.symbol, t.transaction_type, t.quantity, t.transaction_date
+            FROM stockstransactions t
+            JOIN stocksportfolios sp ON t.stocksportfolios_id = sp.id
+            JOIN portfolios p ON sp.portfolios_id = p.id
+            JOIN accounts a ON p.account_id = a.id
+            JOIN users u ON a.user_id = u.id
+            JOIN stocks s ON sp.stock_id = s.id
+            WHERE u.id = %s
+            AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+            ORDER BY t.transaction_date;
+        """
+        cursor.execute(query, (user_id,))
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        if not rows:
+            return jsonify([])
+
+        df = pd.DataFrame(rows)
+        df['transaction_date'] = pd.to_datetime(df['transaction_date'])
+        df['date'] = df['transaction_date'].dt.date
+        df['signed_qty'] = df.apply(lambda x: x['quantity'] if x['transaction_type'] == 'buy' else -x['quantity'], axis=1)
+
+        # Aggregate daily position per symbol
+        daily_positions = (
+            df.groupby(['date', 'symbol'])['signed_qty'].sum()
+            .groupby(level=1).cumsum().reset_index()
+        )
+        daily_positions.rename(columns={'signed_qty': 'shares'}, inplace=True)
+
+        # Date range
+        start_date = datetime.today().date() - timedelta(days=365)
+        end_date = datetime.today().date()
+        date_range = pd.date_range(start=start_date, end=end_date)
+        portfolio_values = pd.DataFrame(index=date_range)
+
+        print("portfolio_values:", portfolio_values)
+        print("daily positions:", daily_positions)
+        # Loop through each symbol
+        for symbol in daily_positions['symbol'].unique():
+            hist = yf.download(symbol, start=start_date, end=end_date, auto_adjust=True)['Close']
+            hist.index = hist.index.date
+            print("hist:", hist)
+
+            symbol_positions = (
+                daily_positions[daily_positions['symbol'] == symbol]
+                .set_index('date')
+                .reindex(date_range.date, method='ffill')
+                .fillna(0)
+            )
+            
+            print("symbol_positions:", symbol_positions)
+            
+            shares = symbol_positions['shares'].reindex(date_range.date, fill_value=0).ffill()
+            print("shares:",shares)
+            print(type(shares))
+            prices = hist.reindex(date_range.date).ffill()
+            print("prices:",prices)
+            print(type(prices))
+            # print(type(portfolio_values))
+            
+            df_test = shares * prices[symbol]
+            print("df_test:", df_test)
+            print(type(df_test))
+
+            portfolio_values[symbol] = shares * prices[symbol]
+            print(portfolio_values[symbol])
+
+        print("portfolio_values:", portfolio_values)
+        portfolio_values['total_value'] = portfolio_values.sum(axis=1)
+        result = (
+            portfolio_values['total_value']
+            .reset_index()
+            .rename(columns={'index': 'date', 'total_value': 'value'})
+            .to_dict(orient='records')
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error getting historical data: {e}")
+        return jsonify({"error": f"Failed to get historical data: {e}"}), 500
+
+        
+            

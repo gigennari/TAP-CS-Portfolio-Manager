@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
     <!-- Header with User Selection -->
@@ -111,18 +112,35 @@
 
         <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- Performance Chart -->
+            <!-- Portfolio Value Trend Chart -->
             <div class="bg-white rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-slate-900">Portfolio vs Fed Funds Rate</h3>
+                    <h3 class="text-xl font-semibold text-slate-900">Portfolio Value Trend</h3>
                     <div class="flex space-x-2">
-                        <button class="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg font-medium">7D</button>
-                        <button class="px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">30D</button>
-                        <button class="px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">90D</button>
+                        <button class="portfolio-period-btn px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg font-medium" data-period="7">7D</button>
+                        <button class="portfolio-period-btn px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg" data-period="30">30D</button>
+                        <button class="portfolio-period-btn px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg" data-period="90">90D</button>
+                        <button class="portfolio-period-btn px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg" data-period="365">1Y</button>
                     </div>
                 </div>
-                <div class="h-80">
+                <div class="h-80 relative">
                     <canvas id="performanceChart"></canvas>
+                    <!-- Loading state for portfolio chart -->
+                    <div id="portfolioChartLoading" class="absolute inset-0 hidden items-center justify-center bg-white bg-opacity-90">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-slate-600 font-medium">Loading portfolio data...</span>
+                        </div>
+                    </div>
+                    <!-- Empty state for portfolio chart -->
+                    <div id="portfolioChartEmpty" class="absolute inset-0 hidden items-center justify-center">
+                        <div class="text-center text-slate-500">
+                            <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <p class="text-sm font-medium">Select a user to view portfolio trend</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -438,6 +456,71 @@
     </div>
 </div>
 
+        <!-- Historical Data Chart -->
+        <div class="bg-white shadow-xl rounded-2xl mt-8">
+            <header class="px-6 py-4 border-b border-slate-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-slate-900">Historical Data</h2>
+                    <div class="flex items-center space-x-4">
+                        <!-- Stock Symbol Selector -->
+                        <div class="relative">
+                            <select id="stockSymbolSelect" class="appearance-none bg-white border border-slate-300 rounded-lg px-4 py-2 pr-8 text-sm font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Select a stock</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Time Period Selector -->
+                        <div class="flex bg-slate-100 rounded-lg p-1">
+                            <button class="time-period-btn active px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="1mo">1M</button>
+                            <button class="time-period-btn px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="3mo">3M</button>
+                            <button class="time-period-btn px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="6mo">6M</button>
+                            <button class="time-period-btn px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="1y">1Y</button>
+                            <button class="time-period-btn px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="2y">2Y</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                <!-- Chart Container -->
+                <div id="historicalChartContainer" class="h-96 flex items-center justify-center">
+                    <div class="text-center text-slate-500">
+                        <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <p class="text-lg font-medium mb-2">Select a stock to view historical data</p>
+                        <p class="text-sm">Choose a stock from your portfolio above</p>
+                    </div>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="historicalChartLoading" class="h-96 hidden items-center justify-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-slate-600 font-medium">Loading historical data...</span>
+                    </div>
+                </div>
+                
+                <!-- Error State -->
+                <div id="historicalChartError" class="h-96 hidden items-center justify-center">
+                    <div class="text-center text-red-500">
+                        <svg class="w-16 h-16 text-red-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-lg font-medium mb-2">Failed to load historical data</p>
+                        <p class="text-sm mb-4">Please try again or select a different stock</p>
+                        <button id="retryHistoricalData" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
     <script>
         // Global variables
@@ -541,10 +624,18 @@
                 // Update sector allocation chart
                 const sectorData = calculateSectorAllocations(walletData.wallet, walletData.totalValue);
                 updateSectorChart(sectorData);
+                
+                // Populate stock selector for historical data
+                populateStockSelector(walletData.wallet);
+                
+                // Load portfolio trend chart
+                loadPortfolioTrend(user_id, currentPortfolioPeriod);
                 } else {
                 console.error('No wallet data received');
                 populateWalletTable([]);
                 updateSectorChart([]); // Show empty state
+                populateStockSelector([]); // Clear stock selector
+                showPortfolioChartState('empty'); // Show empty portfolio chart
                 }
 
                 const balanceResponse = await fetch(`${API_BASE}/balance?user_id=${user_id}`);
@@ -847,6 +938,161 @@
             sectorLegend.innerHTML = legendHTML;
         }
 
+        // Historical Data Functions
+        let currentSelectedSymbol = '';
+        let currentSelectedPeriod = '1mo';
+        let historicalChart = null;
+
+        function populateStockSelector(walletData) {
+            const stockSelect = document.getElementById('stockSymbolSelect');
+            
+            // Clear existing options except the first one
+            stockSelect.innerHTML = '<option value="">Select a stock</option>';
+            
+            if (walletData && walletData.length > 0) {
+                walletData.forEach(stock => {
+                    const option = document.createElement('option');
+                    option.value = stock.symbol;
+                    option.textContent = `${stock.symbol} - ${stock.name}`;
+                    stockSelect.appendChild(option);
+                });
+            }
+        }
+
+        async function loadHistoricalData(symbol, period = '1mo') {
+            if (!symbol) return;
+            
+            try {
+                showHistoricalLoading(true);
+                
+                const response = await fetch(`${API_BASE}/historical-data?symbol=${symbol}&period=${period}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Since the API returns a Plotly JSON object, we'll use Plotly.js to render it
+                displayHistoricalChart(data);
+                
+            } catch (error) {
+                console.error('Error loading historical data:', error);
+                showHistoricalError();
+            } finally {
+                showHistoricalLoading(false);
+            }
+        }
+
+        function displayHistoricalChart(plotlyData) {
+            const container = document.getElementById('historicalChartContainer');
+            
+            // Clear the container
+            container.innerHTML = '';
+            
+            // Create a div for the Plotly chart
+            const chartDiv = document.createElement('div');
+            chartDiv.id = 'historicalChart';
+            chartDiv.style.width = '100%';
+            chartDiv.style.height = '100%';
+            container.appendChild(chartDiv);
+            
+            // Configure Plotly layout for better integration
+            const layout = {
+                ...plotlyData.layout,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: {
+                    family: 'Inter, system-ui, sans-serif',
+                    size: 12,
+                    color: '#475569'
+                },
+                margin: {
+                    l: 60,
+                    r: 30,
+                    t: 30,
+                    b: 60
+                },
+                xaxis: {
+                    ...plotlyData.layout?.xaxis,
+                    gridcolor: '#e2e8f0',
+                    linecolor: '#cbd5e1',
+                    tickcolor: '#cbd5e1'
+                },
+                yaxis: {
+                    ...plotlyData.layout?.yaxis,
+                    gridcolor: '#e2e8f0',
+                    linecolor: '#cbd5e1',
+                    tickcolor: '#cbd5e1'
+                }
+            };
+            
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
+                displaylogo: false
+            };
+            
+            // Render the chart using Plotly
+            Plotly.newPlot('historicalChart', plotlyData.data, layout, config);
+            
+            // Show the chart container
+            showHistoricalStates('chart');
+        }
+
+        function showHistoricalLoading(show) {
+            const loading = document.getElementById('historicalChartLoading');
+            const container = document.getElementById('historicalChartContainer');
+            const error = document.getElementById('historicalChartError');
+            
+            if (show) {
+                loading.classList.remove('hidden');
+                loading.classList.add('flex');
+                container.classList.add('hidden');
+                error.classList.add('hidden');
+            } else {
+                loading.classList.add('hidden');
+                loading.classList.remove('flex');
+            }
+        }
+
+        function showHistoricalError() {
+            showHistoricalStates('error');
+        }
+
+        function showHistoricalStates(state) {
+            const loading = document.getElementById('historicalChartLoading');
+            const container = document.getElementById('historicalChartContainer');
+            const error = document.getElementById('historicalChartError');
+            
+            // Hide all states first
+            loading.classList.add('hidden');
+            loading.classList.remove('flex');
+            container.classList.add('hidden');
+            container.classList.remove('flex');
+            error.classList.add('hidden');
+            error.classList.remove('flex');
+            
+            // Show the requested state
+            switch (state) {
+                case 'loading':
+                    loading.classList.remove('hidden');
+                    loading.classList.add('flex');
+                    break;
+                case 'error':
+                    error.classList.remove('hidden');
+                    error.classList.add('flex');
+                    break;
+                case 'chart':
+                    container.classList.remove('hidden');
+                    container.classList.add('flex');
+                    break;
+                default:
+                    container.classList.remove('hidden');
+                    container.classList.add('flex');
+            }
+        }
+
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
             // Load users on page load
@@ -872,123 +1118,275 @@
             userDropdownMenu.addEventListener('click', function(e) {
                 e.stopPropagation();
             });
+
+            // Historical Data Event Listeners
+            const stockSymbolSelect = document.getElementById('stockSymbolSelect');
+            const timePeriodBtns = document.querySelectorAll('.time-period-btn');
+            const retryBtn = document.getElementById('retryHistoricalData');
+
+            // Stock symbol selection
+            stockSymbolSelect.addEventListener('change', function() {
+                currentSelectedSymbol = this.value;
+                if (currentSelectedSymbol) {
+                    loadHistoricalData(currentSelectedSymbol, currentSelectedPeriod);
+                } else {
+                    showHistoricalStates('default');
+                }
+            });
+
+            // Time period selection
+            timePeriodBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active state
+                    timePeriodBtns.forEach(b => {
+                        b.classList.remove('active', 'bg-white', 'text-indigo-600', 'shadow-sm');
+                        b.classList.add('text-slate-600', 'hover:text-slate-900');
+                    });
+                    
+                    this.classList.add('active', 'bg-white', 'text-indigo-600', 'shadow-sm');
+                    this.classList.remove('text-slate-600', 'hover:text-slate-900');
+                    
+                    currentSelectedPeriod = this.dataset.period;
+                    
+                    // Reload data if a stock is selected
+                    if (currentSelectedSymbol) {
+                        loadHistoricalData(currentSelectedSymbol, currentSelectedPeriod);
+                    }
+                });
+            });
+
+            // Retry button
+            retryBtn.addEventListener('click', function() {
+                if (currentSelectedSymbol) {
+                    loadHistoricalData(currentSelectedSymbol, currentSelectedPeriod);
+                }
+            });
+
+            // Initialize time period button styles
+            timePeriodBtns.forEach(btn => {
+                if (btn.classList.contains('active')) {
+                    btn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                } else {
+                    btn.classList.add('text-slate-600', 'hover:text-slate-900');
+                }
+            });
+
+            // Portfolio Period Button Event Listeners
+            const portfolioPeriodBtns = document.querySelectorAll('.portfolio-period-btn');
+            
+            portfolioPeriodBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active state
+                    portfolioPeriodBtns.forEach(b => {
+                        b.classList.remove('bg-indigo-100', 'text-indigo-700');
+                        b.classList.add('text-slate-500', 'hover:bg-slate-100');
+                    });
+                    
+                    this.classList.add('bg-indigo-100', 'text-indigo-700');
+                    this.classList.remove('text-slate-500', 'hover:bg-slate-100');
+                    
+                    currentPortfolioPeriod = parseInt(this.dataset.period);
+                    
+                    // Reload portfolio trend if a user is selected
+                    if (currentUserId) {
+                        loadPortfolioTrend(currentUserId, currentPortfolioPeriod);
+                    }
+                });
+            });
+
+            // Initialize portfolio chart with empty state
+            showPortfolioChartState('empty');
         });
 
-        // Performance Chart - Portfolio vs Fed Funds Rate
+        // Portfolio Value Trend Chart
+        let portfolioTrendChart = null;
+        let currentPortfolioPeriod = 7;
         const performanceCtx = document.getElementById('performanceChart').getContext('2d');
 
-        // Sample data for the last 7 days
-        const dates = [];
-        const portfolioData = [];
-        const fedRateData = [];
+        async function loadPortfolioTrend(userId, days = 7) {
+            if (!userId) {
+                showPortfolioChartState('empty');
+                return;
+            }
 
-        // Generate sample data
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-            
-            // Sample portfolio performance (starting at 100, with some volatility)
-            portfolioData.push(100 + Math.random() * 10 - 5 + (6 - i) * 0.5);
-            
-            // Fed funds rate (relatively stable around 5.25%)
-            fedRateData.push(5.25 + Math.random() * 0.1 - 0.05);
+            try {
+                showPortfolioChartState('loading');
+                
+                const response = await fetch(`${API_BASE}/historical-data?user_id=${userId}&days=${days}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                updatePortfolioTrendChart(data);
+                showPortfolioChartState('chart');
+                
+            } catch (error) {
+                console.error('Error loading portfolio trend:', error);
+                showPortfolioChartState('empty');
+            }
         }
 
-        new Chart(performanceCtx, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [
-                    {
-                        label: 'Portfolio Performance (%)',
-                        data: portfolioData,
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#6366f1',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 5
-                    },
-                    {
-                        label: 'Fed Funds Rate (%)',
-                        data: fedRateData,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        borderWidth: 3,
-                        fill: false,
-                        tension: 0.4,
-                        pointBackgroundColor: '#ef4444',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 5
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            font: {
-                                size: 12,
-                                weight: '500'
-                            }
+        function updatePortfolioTrendChart(data) {
+            // Destroy existing chart if it exists
+            if (portfolioTrendChart) {
+                portfolioTrendChart.destroy();
+            }
+
+            // Sort data by date to ensure chronological order
+            const sortedData = data.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            // Filter data to show only the requested number of days (latest days)
+            const filteredData = sortedData.slice(-currentPortfolioPeriod);
+
+            // Prepare data for Chart.js
+            const labels = filteredData.map(item => {
+                const date = new Date(item.date);
+                if (currentPortfolioPeriod <= 7) {
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else if (currentPortfolioPeriod <= 90) {
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else {
+                    return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                }
+            });
+            
+            const values = filteredData.map(item => parseFloat(item.value));
+            
+            // Calculate percentage change from first value for better visualization
+            const firstValue = values[0] || 0;
+            const percentageData = values.map(value => 
+                firstValue > 0 ? ((value - firstValue) / firstValue) * 100 : 0
+            );
+
+            portfolioTrendChart = new Chart(performanceCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Portfolio Value',
+                            data: values,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
                         }
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: '#374151',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        displayColors: true
-                    }
+                    ]
                 },
-                scales: {
-                    x: {
-                        grid: {
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
                             display: false
                         },
-                        ticks: {
-                            color: '#64748b',
-                            font: {
-                                size: 11
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(context) {
+                                    return context[0].label;
+                                },
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    const change = firstValue > 0 ? ((value - firstValue) / firstValue) * 100 : 0;
+                                    const changeText = change >= 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
+                                    return [
+                                        `Value: $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                                        `Change: ${changeText}`
+                                    ];
+                                }
                             }
                         }
                     },
-                    y: {
-                        grid: {
-                            color: '#f1f5f9'
-                        },
-                        ticks: {
-                            color: '#64748b',
-                            font: {
-                                size: 11
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
                             },
-                            callback: function(value) {
-                                return value.toFixed(1) + '%';
+                            ticks: {
+                                color: '#64748b',
+                                font: {
+                                    size: 11
+                                },
+                                maxTicksLimit: currentPortfolioPeriod <= 7 ? undefined : currentPortfolioPeriod <= 30 ? 10 : 12,
+                                autoSkip: currentPortfolioPeriod <= 7 ? false : true
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: '#f1f5f9'
+                            },
+                            ticks: {
+                                color: '#64748b',
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('en-US', { 
+                                        minimumFractionDigits: 0, 
+                                        maximumFractionDigits: 0 
+                                    });
+                                }
                             }
                         }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
                     }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
                 }
+            });
+        }
+
+        function showPortfolioChartState(state) {
+            const loading = document.getElementById('portfolioChartLoading');
+            const empty = document.getElementById('portfolioChartEmpty');
+            const canvas = document.getElementById('performanceChart');
+            
+            // Hide all states first
+            loading.classList.add('hidden');
+            loading.classList.remove('flex');
+            empty.classList.add('hidden');
+            empty.classList.remove('flex');
+            canvas.style.display = 'block';
+            
+            switch (state) {
+                case 'loading':
+                    loading.classList.remove('hidden');
+                    loading.classList.add('flex');
+                    canvas.style.display = 'none';
+                    break;
+                case 'empty':
+                    empty.classList.remove('hidden');
+                    empty.classList.add('flex');
+                    canvas.style.display = 'none';
+                    if (portfolioTrendChart) {
+                        portfolioTrendChart.destroy();
+                        portfolioTrendChart = null;
+                    }
+                    break;
+                case 'chart':
+                    canvas.style.display = 'block';
+                    break;
             }
-        });
+        }
 
         // Sector Allocation Pie Chart - will be initialized dynamically
         let sectorChart = null;
