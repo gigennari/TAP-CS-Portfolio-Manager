@@ -8,6 +8,7 @@ cd server
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+pip install yfinance --upgrade --no-cache-dir
 python app.py
 ```
 

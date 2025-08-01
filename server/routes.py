@@ -4,39 +4,230 @@ import requests
 import os
 from datetime import datetime, timedelta
 from db import init_db, dump_db
+from time import sleep
 
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
-# Alpha Vantage API configuration
+# Alpha Vantage config
 ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY', 'YD0AVPAM5ADQLFPS')
 ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query'
 
+
+#get all users from users table
+@portfolio_bp.route('/users', methods=['GET'])
+def get_users():
+    """Get all users from the users table"""
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users")
+        
+        users = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"users": users})
+        
+    except Exception as e:
+        print(f"Error getting users: {e}")
+        return jsonify({"error": "Failed to get users"}), 500
 
 #get portfolio balance (accounts table)
 @portfolio_bp.route('/balance', methods=['GET'])
 def get_balance():
     # Implementation for getting portfolio balance
-    cursor = init_db().cursor(dictionary=True)
-    user_id = request.args.get('user_id')
-       
-    cursor.execute("SELECT balance FROM accounts WHERE user_id = %s", (user_id,))
-    return jsonify({"balance": 10000.00})
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+           
+        cursor.execute("SELECT balance FROM accounts WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if result:
+            return jsonify({"balance": result['balance']})
+        else:
+            return jsonify({"balance": 0.00})
+            
+    except Exception as e:
+        print(f"Error getting balance: {e}")
+        return jsonify({"error": "Failed to get balance"}), 500
 
 #process transaction (buy/sell) -> REMOVE LIMIT ORDERS 
 #----(request must have user id, qty, current price , stock symbol, type of operation)
 
+
+@portfolio_bp.route('/portfoliovalue', methods=['GET'])
+def get_total_portfolio_value():
+    """Get total portfolio value for a user"""
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+        
+        cursor.execute("""
+            SELECT SUM(sp.quantity * s.current_price) AS total_value
+            FROM stocksportfolio sp
+            JOIN stocks s ON sp.symbol = s.symbol
+            WHERE sp.user_id = %s
+        """, (user_id,))
+        
+        result = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        total_value = result['total_value'] if result['total_value'] else 0.00
+        
+        return jsonify({"totalPortfolioValue": total_value})
+        
+    except Exception as e:
+        print(f"Error getting total portfolio value: {e}")
+        return jsonify({"error": "Failed to get total portfolio value"}), 500
+    
+    
+@portfolio_bp.route('/wallet', methods=['GET'])
+def get_wallet():
+    """Get user's wallet/portfolio with current stock prices"""
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+        
+        # Get user's stock portfolio with symbol, quantity, avg_cost, company_name
+        cursor.execute("""
+            SELECT s.symbol, sp.quantity, sp.average_cost AS avg_cost, s.company_name
+            FROM accounts a  
+            INNER JOIN portfolios p ON a.id = p.account_id
+            JOIN stocksportfolios sp ON p.id = sp.portfolios_id
+            JOIN stocks s ON sp.stock_id = s.id
+            WHERE a.user_id = %s AND sp.quantity > 0
+            ORDER BY s.symbol;
+        """, (user_id,))
+        
+        portfolio_stocks = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        if not portfolio_stocks:
+            return jsonify({"wallet": [], "totalValue": 0.00})
+        
+        wallet_data = []
+        total_portfolio_value = 0.00
+        
+        for stock in portfolio_stocks:
+            symbol = stock['symbol']
+            print(symbol)
+            quantity = float(stock['quantity'])
+            avg_cost = float(stock['avg_cost']) if stock['avg_cost'] else 0.00
+            name = stock.get('company_name', symbol)
+
+            try:
+                ticker = yf.Ticker(symbol)
+                hist = ticker.history(period="7d")
+
+                current_price = float(hist['Close'][-1]) if not hist.empty else 0.00
+                price_24h = float(hist['Close'][-2]) if len(hist) > 1 else current_price
+                price_7d = float(hist['Close'][0]) if len(hist) > 0 else current_price
+
+                change_1h = 0.00  # Yahoo doesn't support 1h granularity
+                change_24h = ((current_price - price_24h) / price_24h * 100) if price_24h > 0 else 0.00
+                change_7d = ((current_price - price_7d) / price_7d * 100) if price_7d > 0 else 0.00
+
+                market_value = quantity * current_price
+                total_cost = quantity * avg_cost
+                gain_loss = market_value - total_cost
+                gain_loss_percent = (gain_loss / total_cost * 100) if total_cost > 0 else 0.00
+
+                # Use fast_info for limited info (faster than .info)
+                info = ticker.fast_info if hasattr(ticker, "fast_info") else {}
+                sector = ticker.info.get("sector", "Unknown")
+                industry = ticker.info.get("industry", "Unknown")
+
+                wallet_item = {
+                    "symbol": symbol,
+                    "name": name,
+                    "quantity": quantity,
+                    "avgCost": avg_cost,
+                    "currentPrice": current_price,
+                    "marketValue": market_value,
+                    "gainLoss": gain_loss,
+                    "gainLossPercent": gain_loss_percent,
+                    "change1h": change_1h,
+                    "change24h": change_24h,
+                    "change7d": change_7d,
+                    "marketCap": info.get("market_cap", 0),
+                    "volume": info.get("volume", 0),
+                    "sector": sector,
+                    "industry": industry
+                }
+
+            except Exception as stock_error:
+                print(f"Error processing stock {symbol}: {stock_error}")
+                market_value = quantity * 0.00
+                wallet_item = {
+                    "symbol": symbol,
+                    "name": name,
+                    "quantity": quantity,
+                    "avgCost": avg_cost,
+                    "currentPrice": 0.00,
+                    "marketValue": market_value,
+                    "gainLoss": 0.00,
+                    "gainLossPercent": 0.00,
+                    "change1h": 0.00,
+                    "change24h": 0.00,
+                    "change7d": 0.00,
+                    "marketCap": 0,
+                    "volume": 0,
+                    "sector": "Unknown",
+                    "industry": "Unknown"
+                }
+
+            wallet_data.append(wallet_item)
+            total_portfolio_value += wallet_item["marketValue"]
+        
+        return jsonify({
+            "wallet": wallet_data,
+            "totalValue": round(total_portfolio_value, 2),
+            "count": len(wallet_data)
+        })
+
+    except Exception as e:
+        print(f"Error getting wallet: {e}")
+        return jsonify({"error": f"Failed to get wallet data: {str(e)}"}), 500
+
+
+
+
+
+    
 @portfolio_bp.route('/trade', methods=['POST'])
 def execute_trade():
     """Execute a trade order"""
     try:
         data = request.get_json()
         
-        required_fields = ['symbol', 'action', 'quantity']
+        required_fields = ['user_id', 'symbol', 'action', 'quantity']
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
         
+        user_id = data['user_id']
         symbol = data['symbol'].upper()
         action = data['action'].lower()  # 'buy' or 'sell'
         quantity = float(data['quantity'])
@@ -72,6 +263,7 @@ def execute_trade():
         trade_result = {
             "success": True,
             "orderId": order_id,
+            "user_id": user_id,
             "symbol": symbol,
             "action": action,
             "quantity": quantity,

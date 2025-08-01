@@ -11,7 +11,7 @@ MYSQLDUMP_PATH = r"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump.exe"
 DB_HOST ='localhost'
 DB_USER ='root'
 DB_PASSWORD='n3u3da!'
-DB_NAME='bygDB'
+DB_NAME='bygdb'
 
 def init_db():
     
