@@ -181,9 +181,6 @@
                             <div class="font-medium text-left">Market Value</div>
                         </th>
                         <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r last:pl-5 last:sticky last:right-0">
-                            <div class="font-medium text-left">1h</div>
-                        </th>
-                        <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r last:pl-5 last:sticky last:right-0">
                             <div class="font-medium text-left">24h</div>
                         </th>
                         <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r last:pl-5 last:sticky last:right-0">
@@ -198,7 +195,7 @@
                 <tbody class="text-sm font-medium">
                     <!-- Portfolio data will be populated here dynamically -->
                     <tr>
-                        <td colspan="10" class="px-5 py-8 text-center text-slate-500">
+                        <td colspan="9" class="px-5 py-8 text-center text-slate-500">
                             <div class="flex flex-col items-center">
                                 <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -570,7 +567,7 @@
             if (!walletData || walletData.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="10" class="px-5 py-8 text-center text-slate-500">
+                        <td colspan="9" class="px-5 py-8 text-center text-slate-500">
                             <div class="flex flex-col items-center">
                                 <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8l-2-2m0 0l-2 2m2-2v6m-6 6l2 2m0 0l2-2m-2 2V9"></path>
@@ -587,7 +584,6 @@
             const tableHTML = walletData.map((stock, index) => {
                 const gainLossClass = stock.gainLoss >= 0 ? 'text-emerald-600' : 'text-red-600';
                 const change24hClass = stock.change24h >= 0 ? 'text-emerald-600' : 'text-red-600';
-                const change1hClass = stock.change1h >= 0 ? 'text-emerald-600' : 'text-red-600';
                 const change7dClass = stock.change7d >= 0 ? 'text-emerald-600' : 'text-red-600';
                 
                 return `
@@ -617,9 +613,6 @@
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200">
                             <div class="font-medium text-slate-900">$${stock.marketValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        </td>
-                        <td class="px-5 py-3 border-b border-slate-200">
-                            <div class="font-medium ${change1hClass}">${stock.change1h >= 0 ? '+' : ''}${stock.change1h.toFixed(2)}%</div>
                         </td>
                         <td class="px-5 py-3 border-b border-slate-200">
                             <div class="font-medium ${change24hClass}">${stock.change24h >= 0 ? '+' : ''}${stock.change24h.toFixed(2)}%</div>
@@ -678,7 +671,7 @@
             if (show) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="10" class="px-5 py-8 text-center">
+                        <td colspan="9" class="px-5 py-8 text-center">
                             <div class="flex items-center justify-center space-x-2">
                                 <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                                 <span class="text-slate-600">Loading portfolio...</span>
@@ -693,7 +686,7 @@
             const tableBody = document.querySelector('tbody');
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="10" class="px-5 py-8 text-center text-red-500">
+                    <td colspan="9" class="px-5 py-8 text-center text-red-500">
                         <div class="flex flex-col items-center">
                             <svg class="w-12 h-12 text-red-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
