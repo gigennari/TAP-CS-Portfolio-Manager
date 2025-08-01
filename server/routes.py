@@ -5,6 +5,9 @@ import os
 from datetime import datetime, timedelta
 from db import init_db, dump_db
 from time import sleep
+import plotly.graph_objects as go #built on javascript, can be used on front end 
+from plotly.subplots import make_subplots
+import pandas as pd
 
 
 portfolio_bp = Blueprint('portfolio', __name__)
@@ -436,35 +439,52 @@ def get_stock_history(symbol):
         print(f"Error getting stock history for {symbol}: {e}")
         return jsonify({"error": f"Failed to get stock history for {symbol}"}), 500
 
-@portfolio_bp.route('/portfolio', methods=['GET'])
-def get_portfolio():
-    """Get user's current portfolio"""
-    # This would typically fetch from database
-    # For now, return mock data
-    portfolio = {
-        "totalValue": 1234567.89,
-        "totalChange": 28945.12,
-        "totalChangePercent": 2.34,
-        "positions": [
-            {
-                "symbol": "BTC-USD",
-                "name": "Bitcoin",
-                "quantity": 0.5234,
-                "currentPrice": 67177.77,
-                "totalValue": 35156.78,
-                "change": 1234.56,
-                "changePercent": 3.64
-            },
-            {
-                "symbol": "SOL-USD", 
-                "name": "Solana",
-                "quantity": 15.67,
-                "currentPrice": 187.50,
-                "totalValue": 2938.13,
-                "change": -45.23,
-                "changePercent": -1.52
-            }
-        ]
-    }
-    
-    return jsonify(portfolio)
+@portfolio_bp.route('/historical-data', methods=['GET'])
+def get_historical_data_for_user():
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+        
+        # Get user's stock portfolio with symbol, quantity, avg_cost, company_name
+        cursor.execute("""
+            SELECT s.symbol, sp.quantity, sp.average_cost AS avg_cost, s.company_name
+            FROM accounts a  
+            INNER JOIN portfolios p ON a.id = p.account_id
+            JOIN stocksportfolios sp ON p.id = sp.portfolios_id
+            JOIN stocks s ON sp.stock_id = s.id
+            WHERE a.user_id = %s AND sp.quantity > 0
+            ORDER BY s.symbol;
+        """, (user_id,))
+        
+        portfolio_stocks = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        if not portfolio_stocks:
+            return jsonify({})
+        
+        historical_data = {}
+        
+        for stock in portfolio_stocks[0:1]:
+            symbol = stock['symbol']
+            quantity = float(stock['quantity'])
+            avg_cost = float(stock['avg_cost']) if stock['avg_cost'] else 0.00
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="1y")
+            
+            for date, row in hist.iterrows():
+                date_str = date.strftime("%Y-%m-%d")
+                close_price = float(row["Close"]) if not pd.isna(row["Close"]) else 0.00
+                value = close_price * quantity
+                historical_data[date_str] = historical_data.get(date_str, 0.00) + value
+            
+    except Exception as e:
+        print(f"Error getting historical data: {e}")
+        return jsonify({"error": f"Failed to get historical data {e}"}), 500
+            
+            

@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
     <!-- Header with User Selection -->
@@ -438,6 +439,71 @@
     </div>
 </div>
 
+        <!-- Historical Data Chart -->
+        <div class="bg-white shadow-xl rounded-2xl mt-8">
+            <header class="px-6 py-4 border-b border-slate-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-slate-900">Historical Data</h2>
+                    <div class="flex items-center space-x-4">
+                        <!-- Stock Symbol Selector -->
+                        <div class="relative">
+                            <select id="stockSymbolSelect" class="appearance-none bg-white border border-slate-300 rounded-lg px-4 py-2 pr-8 text-sm font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Select a stock</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Time Period Selector -->
+                        <div class="flex bg-slate-100 rounded-lg p-1">
+                            <button class="time-period-btn active px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="1mo">1M</button>
+                            <button class="time-period-btn px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="3mo">3M</button>
+                            <button class="time-period-btn px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="6mo">6M</button>
+                            <button class="time-period-btn px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="1y">1Y</button>
+                            <button class="time-period-btn px-3 py-1 text-sm font-medium rounded-md transition-colors" data-period="2y">2Y</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                <!-- Chart Container -->
+                <div id="historicalChartContainer" class="h-96 flex items-center justify-center">
+                    <div class="text-center text-slate-500">
+                        <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <p class="text-lg font-medium mb-2">Select a stock to view historical data</p>
+                        <p class="text-sm">Choose a stock from your portfolio above</p>
+                    </div>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="historicalChartLoading" class="h-96 hidden items-center justify-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-slate-600 font-medium">Loading historical data...</span>
+                    </div>
+                </div>
+                
+                <!-- Error State -->
+                <div id="historicalChartError" class="h-96 hidden items-center justify-center">
+                    <div class="text-center text-red-500">
+                        <svg class="w-16 h-16 text-red-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-lg font-medium mb-2">Failed to load historical data</p>
+                        <p class="text-sm mb-4">Please try again or select a different stock</p>
+                        <button id="retryHistoricalData" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
     <script>
         // Global variables
@@ -541,10 +607,14 @@
                 // Update sector allocation chart
                 const sectorData = calculateSectorAllocations(walletData.wallet, walletData.totalValue);
                 updateSectorChart(sectorData);
+                
+                // Populate stock selector for historical data
+                populateStockSelector(walletData.wallet);
                 } else {
                 console.error('No wallet data received');
                 populateWalletTable([]);
                 updateSectorChart([]); // Show empty state
+                populateStockSelector([]); // Clear stock selector
                 }
 
                 const balanceResponse = await fetch(`${API_BASE}/balance?user_id=${user_id}`);
@@ -847,6 +917,161 @@
             sectorLegend.innerHTML = legendHTML;
         }
 
+        // Historical Data Functions
+        let currentSelectedSymbol = '';
+        let currentSelectedPeriod = '1mo';
+        let historicalChart = null;
+
+        function populateStockSelector(walletData) {
+            const stockSelect = document.getElementById('stockSymbolSelect');
+            
+            // Clear existing options except the first one
+            stockSelect.innerHTML = '<option value="">Select a stock</option>';
+            
+            if (walletData && walletData.length > 0) {
+                walletData.forEach(stock => {
+                    const option = document.createElement('option');
+                    option.value = stock.symbol;
+                    option.textContent = `${stock.symbol} - ${stock.name}`;
+                    stockSelect.appendChild(option);
+                });
+            }
+        }
+
+        async function loadHistoricalData(symbol, period = '1mo') {
+            if (!symbol) return;
+            
+            try {
+                showHistoricalLoading(true);
+                
+                const response = await fetch(`${API_BASE}/historical-data?symbol=${symbol}&period=${period}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Since the API returns a Plotly JSON object, we'll use Plotly.js to render it
+                displayHistoricalChart(data);
+                
+            } catch (error) {
+                console.error('Error loading historical data:', error);
+                showHistoricalError();
+            } finally {
+                showHistoricalLoading(false);
+            }
+        }
+
+        function displayHistoricalChart(plotlyData) {
+            const container = document.getElementById('historicalChartContainer');
+            
+            // Clear the container
+            container.innerHTML = '';
+            
+            // Create a div for the Plotly chart
+            const chartDiv = document.createElement('div');
+            chartDiv.id = 'historicalChart';
+            chartDiv.style.width = '100%';
+            chartDiv.style.height = '100%';
+            container.appendChild(chartDiv);
+            
+            // Configure Plotly layout for better integration
+            const layout = {
+                ...plotlyData.layout,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: {
+                    family: 'Inter, system-ui, sans-serif',
+                    size: 12,
+                    color: '#475569'
+                },
+                margin: {
+                    l: 60,
+                    r: 30,
+                    t: 30,
+                    b: 60
+                },
+                xaxis: {
+                    ...plotlyData.layout?.xaxis,
+                    gridcolor: '#e2e8f0',
+                    linecolor: '#cbd5e1',
+                    tickcolor: '#cbd5e1'
+                },
+                yaxis: {
+                    ...plotlyData.layout?.yaxis,
+                    gridcolor: '#e2e8f0',
+                    linecolor: '#cbd5e1',
+                    tickcolor: '#cbd5e1'
+                }
+            };
+            
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
+                displaylogo: false
+            };
+            
+            // Render the chart using Plotly
+            Plotly.newPlot('historicalChart', plotlyData.data, layout, config);
+            
+            // Show the chart container
+            showHistoricalStates('chart');
+        }
+
+        function showHistoricalLoading(show) {
+            const loading = document.getElementById('historicalChartLoading');
+            const container = document.getElementById('historicalChartContainer');
+            const error = document.getElementById('historicalChartError');
+            
+            if (show) {
+                loading.classList.remove('hidden');
+                loading.classList.add('flex');
+                container.classList.add('hidden');
+                error.classList.add('hidden');
+            } else {
+                loading.classList.add('hidden');
+                loading.classList.remove('flex');
+            }
+        }
+
+        function showHistoricalError() {
+            showHistoricalStates('error');
+        }
+
+        function showHistoricalStates(state) {
+            const loading = document.getElementById('historicalChartLoading');
+            const container = document.getElementById('historicalChartContainer');
+            const error = document.getElementById('historicalChartError');
+            
+            // Hide all states first
+            loading.classList.add('hidden');
+            loading.classList.remove('flex');
+            container.classList.add('hidden');
+            container.classList.remove('flex');
+            error.classList.add('hidden');
+            error.classList.remove('flex');
+            
+            // Show the requested state
+            switch (state) {
+                case 'loading':
+                    loading.classList.remove('hidden');
+                    loading.classList.add('flex');
+                    break;
+                case 'error':
+                    error.classList.remove('hidden');
+                    error.classList.add('flex');
+                    break;
+                case 'chart':
+                    container.classList.remove('hidden');
+                    container.classList.add('flex');
+                    break;
+                default:
+                    container.classList.remove('hidden');
+                    container.classList.add('flex');
+            }
+        }
+
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
             // Load users on page load
@@ -871,6 +1096,58 @@
             // Prevent dropdown from closing when clicking inside
             userDropdownMenu.addEventListener('click', function(e) {
                 e.stopPropagation();
+            });
+
+            // Historical Data Event Listeners
+            const stockSymbolSelect = document.getElementById('stockSymbolSelect');
+            const timePeriodBtns = document.querySelectorAll('.time-period-btn');
+            const retryBtn = document.getElementById('retryHistoricalData');
+
+            // Stock symbol selection
+            stockSymbolSelect.addEventListener('change', function() {
+                currentSelectedSymbol = this.value;
+                if (currentSelectedSymbol) {
+                    loadHistoricalData(currentSelectedSymbol, currentSelectedPeriod);
+                } else {
+                    showHistoricalStates('default');
+                }
+            });
+
+            // Time period selection
+            timePeriodBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active state
+                    timePeriodBtns.forEach(b => {
+                        b.classList.remove('active', 'bg-white', 'text-indigo-600', 'shadow-sm');
+                        b.classList.add('text-slate-600', 'hover:text-slate-900');
+                    });
+                    
+                    this.classList.add('active', 'bg-white', 'text-indigo-600', 'shadow-sm');
+                    this.classList.remove('text-slate-600', 'hover:text-slate-900');
+                    
+                    currentSelectedPeriod = this.dataset.period;
+                    
+                    // Reload data if a stock is selected
+                    if (currentSelectedSymbol) {
+                        loadHistoricalData(currentSelectedSymbol, currentSelectedPeriod);
+                    }
+                });
+            });
+
+            // Retry button
+            retryBtn.addEventListener('click', function() {
+                if (currentSelectedSymbol) {
+                    loadHistoricalData(currentSelectedSymbol, currentSelectedPeriod);
+                }
+            });
+
+            // Initialize time period button styles
+            timePeriodBtns.forEach(btn => {
+                if (btn.classList.contains('active')) {
+                    btn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                } else {
+                    btn.classList.add('text-slate-600', 'hover:text-slate-900');
+                }
             });
         });
 
