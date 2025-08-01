@@ -4,7 +4,11 @@ import requests
 import os
 from datetime import datetime, timedelta
 from db import init_db, dump_db
+import asyncio
+import yfinance as yf
+from concurrent.futures import ThreadPoolExecutor
 
+executor = ThreadPoolExecutor(max_workers=10)
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
@@ -95,6 +99,12 @@ def get_total_portfolio_value():
         print(f"Error getting total portfolio value: {e}")
         return jsonify({"error": "Failed to get total portfolio value"}), 500
 
+async def fetch_prices(symbols):
+    loop = asyncio.get_event_loop()
+    tasks = [loop.run_in_executor(executor, fetch_price, symbol) for symbol in symbols]
+    prices = await asyncio.gather(*tasks)
+    return dict(zip(symbols, prices))
+
 @portfolio_bp.route('/wallet', methods=['GET'])
 def get_wallet():
     """Get user's wallet/portfolio with current stock prices"""
@@ -108,13 +118,13 @@ def get_wallet():
         
         # Get user's stock portfolio
         cursor.execute("""
-            SELECT s.symbol, sp.quantity, sp.avg_cost, s.name, 
+            SELECT s.symbol, sp.quantity, sp.average_cost, s.company_name
             FROM accounts a  
             INNER JOIN portfolios p ON a.id = p.account_id
             JOIN stocksportfolios sp ON p.id = sp.portfolios_id
             JOIN stocks s ON sp.stock_id = s.id
             WHERE a.user_id = %s AND sp.quantity > 0
-            ORDER BY sp.symbol
+            ORDER BY s.symbol;
         """, (user_id,))
         
         portfolio_stocks = cursor.fetchall()
@@ -125,100 +135,111 @@ def get_wallet():
         if not portfolio_stocks:
             return jsonify({"wallet": [], "totalValue": 0.00})
         
-        wallet_data = []
-        total_portfolio_value = 0.00
+        user_symbols = [stock['symbol'] for stock in portfolio_stocks]
         
-        for stock in portfolio_stocks:
-            try:
-                # Get current price from Yahoo Finance
-                ticker = yf.Ticker(stock['symbol'])
-                hist = ticker.history(period="1d")
-                
-                if not hist.empty:
-                    current_price = float(hist['Close'][-1])
-                else:
-                    # Fallback to stored price or 0
-                    current_price = float(stock['stored_price']) if stock['stored_price'] else 0.00
-                
-                # Get additional stock info
-                info = ticker.info
-                
-                # Calculate values
-                quantity = float(stock['quantity'])
-                avg_cost = float(stock['avg_cost']) if stock['avg_cost'] else 0.00
-                market_value = quantity * current_price
-                total_cost = quantity * avg_cost
-                gain_loss = market_value - total_cost
-                gain_loss_percent = (gain_loss / total_cost * 100) if total_cost > 0 else 0.00
-                
-                # Get price changes
-                hist_5d = ticker.history(period="5d")
-                price_1h = current_price  # Yahoo doesn't provide 1h data easily
-                price_24h = float(hist['Close'][-2]) if len(hist) > 1 else current_price
-                price_7d = float(hist_5d['Close'][0]) if len(hist_5d) > 0 else current_price
-                
-                change_1h = 0.00  # Placeholder
-                change_24h = ((current_price - price_24h) / price_24h * 100) if price_24h > 0 else 0.00
-                change_7d = ((current_price - price_7d) / price_7d * 100) if price_7d > 0 else 0.00
-                
-                wallet_item = {
-                    "symbol": stock['symbol'],
-                    "name": stock['name'] or info.get('longName', stock['symbol']),
-                    "quantity": quantity,
-                    "avgCost": avg_cost,
-                    "currentPrice": current_price,
-                    "marketValue": market_value,
-                    "gainLoss": gain_loss,
-                    "gainLossPercent": gain_loss_percent,
-                    "change1h": change_1h,
-                    "change24h": change_24h,
-                    "change7d": change_7d,
-                    "marketCap": info.get('marketCap', 0),
-                    "volume": info.get('volume', 0),
-                    "sector": info.get('sector', 'Unknown'),
-                    "industry": info.get('industry', 'Unknown')
-                }
-                
-                wallet_data.append(wallet_item)
-                total_portfolio_value += market_value
-                
-            except Exception as stock_error:
-                print(f"Error processing stock {stock['symbol']}: {stock_error}")
-                # Add stock with stored/fallback data
-                quantity = float(stock['quantity'])
-                current_price = float(stock['stored_price']) if stock['stored_price'] else 0.00
-                market_value = quantity * current_price
-                
-                wallet_item = {
-                    "symbol": stock['symbol'],
-                    "name": stock['name'] or stock['symbol'],
-                    "quantity": quantity,
-                    "avgCost": float(stock['avg_cost']) if stock['avg_cost'] else 0.00,
-                    "currentPrice": current_price,
-                    "marketValue": market_value,
-                    "gainLoss": 0.00,
-                    "gainLossPercent": 0.00,
-                    "change1h": 0.00,
-                    "change24h": 0.00,
-                    "change7d": 0.00,
-                    "marketCap": 0,
-                    "volume": 0,
-                    "sector": "Unknown",
-                    "industry": "Unknown"
-                }
-                
-                wallet_data.append(wallet_item)
-                total_portfolio_value += market_value
-        
-        return jsonify({
-            "wallet": wallet_data,
-            "totalValue": total_portfolio_value,
-            "count": len(wallet_data)
-        })
-        
+        prices = asyncio.run(fetch_prices(user_symbols))
+
+        wallet = [{"symbol": sym, "price": price} for sym, price in prices.items()]
+        total_value = sum(item["price"] for item in wallet)
+
+        return jsonify({"wallet": wallet, "totalValue": total_value, "count": len(wallet)})
     except Exception as e:
         print(f"Error getting wallet: {e}")
-        return jsonify({"error": "Failed to get wallet data"}), 500
+        return jsonify({"error": "Failed to get wallet data"}), 500    
+    #     wallet_data = []
+    #     total_portfolio_value = 0.00
+        
+    #     for stock in portfolio_stocks:
+    #         try:
+    #             # Get current price from Yahoo Finance
+    #             ticker = yf.Ticker(stock['symbol'])
+    #             hist = ticker.history(period="1d")
+                
+    #             if not hist.empty:
+    #                 current_price = float(hist['Close'][-1])
+    #             else:
+    #                 # Fallback to stored price or 0
+    #                 current_price = float(stock['stored_price']) if stock['stored_price'] else 0.00
+                
+    #             # Get additional stock info
+    #             info = ticker.info
+                
+    #             # Calculate values
+    #             quantity = float(stock['quantity'])
+    #             avg_cost = float(stock['avg_cost']) if stock['avg_cost'] else 0.00
+    #             market_value = quantity * current_price
+    #             total_cost = quantity * avg_cost
+    #             gain_loss = market_value - total_cost
+    #             gain_loss_percent = (gain_loss / total_cost * 100) if total_cost > 0 else 0.00
+                
+    #             # Get price changes
+    #             hist_5d = ticker.history(period="5d")
+    #             price_1h = current_price  # Yahoo doesn't provide 1h data easily
+    #             price_24h = float(hist['Close'][-2]) if len(hist) > 1 else current_price
+    #             price_7d = float(hist_5d['Close'][0]) if len(hist_5d) > 0 else current_price
+                
+    #             change_1h = 0.00  # Placeholder
+    #             change_24h = ((current_price - price_24h) / price_24h * 100) if price_24h > 0 else 0.00
+    #             change_7d = ((current_price - price_7d) / price_7d * 100) if price_7d > 0 else 0.00
+                
+    #             wallet_item = {
+    #                 "symbol": stock['symbol'],
+    #                 "name": stock['name'] or info.get('longName', stock['symbol']),
+    #                 "quantity": quantity,
+    #                 "avgCost": avg_cost,
+    #                 "currentPrice": current_price,
+    #                 "marketValue": market_value,
+    #                 "gainLoss": gain_loss,
+    #                 "gainLossPercent": gain_loss_percent,
+    #                 "change1h": change_1h,
+    #                 "change24h": change_24h,
+    #                 "change7d": change_7d,
+    #                 "marketCap": info.get('marketCap', 0),
+    #                 "volume": info.get('volume', 0),
+    #                 "sector": info.get('sector', 'Unknown'),
+    #                 "industry": info.get('industry', 'Unknown')
+    #             }
+                
+    #             wallet_data.append(wallet_item)
+    #             total_portfolio_value += market_value
+                
+    #         except Exception as stock_error:
+    #             print(f"Error processing stock {stock['symbol']}: {stock_error}")
+    #             # Add stock with stored/fallback data
+    #             quantity = float(stock['quantity'])
+    #             current_price = float(stock['stored_price']) if stock['stored_price'] else 0.00
+    #             market_value = quantity * current_price
+                
+    #             wallet_item = {
+    #                 "symbol": stock['symbol'],
+    #                 "name": stock['name'] or stock['symbol'],
+    #                 "quantity": quantity,
+    #                 "avgCost": float(stock['avg_cost']) if stock['avg_cost'] else 0.00,
+    #                 "currentPrice": current_price,
+    #                 "marketValue": market_value,
+    #                 "gainLoss": 0.00,
+    #                 "gainLossPercent": 0.00,
+    #                 "change1h": 0.00,
+    #                 "change24h": 0.00,
+    #                 "change7d": 0.00,
+    #                 "marketCap": 0,
+    #                 "volume": 0,
+    #                 "sector": "Unknown",
+    #                 "industry": "Unknown"
+    #             }
+                
+    #             wallet_data.append(wallet_item)
+    #             total_portfolio_value += market_value
+        
+    #     return jsonify({
+    #         "wallet": wallet_data,
+    #         "totalValue": total_portfolio_value,
+    #         "count": len(wallet_data)
+    #     })
+        
+    # except Exception as e:
+    #     print(f"Error getting wallet: {e}")
+    #     return jsonify({"error": "Failed to get wallet data"}), 500
     
 @portfolio_bp.route('/trade', methods=['POST'])
 def execute_trade():
