@@ -368,16 +368,16 @@
 
             const usersHTML = users.map(user => `
                 <div class="user-item p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0" 
-                     onclick="selectUser(${user.user_id}, '${user.username}', '${user.email}', '${user.first_name}', '${user.last_name}')">
+                     onclick="selectUser(${user.id}, '${user.username}', '${user.email}', '${user.name}')">
                     <div class="flex items-center space-x-3">
                         <div class="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                             <span class="text-white text-xs font-medium">
-                                ${(user.first_name || user.username || 'U').charAt(0).toUpperCase()}
+                                ${(user.name || user.username || 'U').charAt(0).toUpperCase()}
                             </span>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="text-sm font-medium text-slate-900">
-                                ${user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.username}
+                                ${user.name || user.username}
                             </div>
                             <div class="text-xs text-slate-500 truncate">${user.email}</div>
                         </div>
@@ -386,20 +386,35 @@
             `).join('');
 
             usersList.innerHTML = usersHTML;
+            
+            // Auto-select user if specified in URL parameters
+            if (window.autoSelectUserId) {
+                const targetUser = users.find(user => user.id == window.autoSelectUserId);
+                if (targetUser) {
+                    selectUser(targetUser.id, targetUser.username, targetUser.email, targetUser.name);
+                    // Clear the auto-select flag
+                    window.autoSelectUserId = null;
+                }
+            } else {
+                // Auto-select user with ID = 1 if available (default user)
+                const defaultUser = users.find(user => user.id == 1);
+                if (defaultUser) {
+                    selectUser(defaultUser.id, defaultUser.username, defaultUser.email, defaultUser.name);
+                }
+            }
         }
 
-        function selectUser(userId, username, email, firstName, lastName) {
+        function selectUser(userId, username, email, name) {
             currentUserId = userId;
             currentUser = {
                 user_id: userId,
                 username: username,
                 email: email,
-                first_name: firstName,
-                last_name: lastName
+                name: name
             };
 
             // Update UI
-            const displayName = firstName && lastName ? `${firstName} ${lastName}` : username;
+            const displayName = name || username;
             document.getElementById('selectedUserName').textContent = displayName;
 
             // Close dropdown
@@ -428,7 +443,34 @@
             setupEventListeners();
             initializeChart();
             loadUsers();
+            
+            // Check for stock symbol in URL parameters
+            checkUrlParameters();
         });
+        
+        function checkUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const symbol = urlParams.get('symbol');
+            const name = urlParams.get('name');
+            const userId = urlParams.get('user_id');
+            
+            // Store the user ID to auto-select after users are loaded
+            if (userId) {
+                window.autoSelectUserId = userId;
+            }
+            
+            if (symbol) {
+                // Set the search input with the stock info
+                if (name) {
+                    stockSearch.value = `${symbol} - ${name}`;
+                } else {
+                    stockSearch.value = symbol;
+                }
+                
+                // Load the stock data automatically
+                loadStockData(symbol.toUpperCase());
+            }
+        }
 
         function setupEventListeners() {
             // Search functionality
@@ -1019,9 +1061,7 @@
             };
             
             // Show confirmation
-            const userDisplayName = currentUser.first_name && currentUser.last_name 
-                ? `${currentUser.first_name} ${currentUser.last_name}` 
-                : currentUser.username;
+            const userDisplayName = currentUser.name || currentUser.username;
             
             const confirmMessage = `Confirm ${tradeAction.toUpperCase()} order:\n\n` +
                 `User: ${userDisplayName}\n` +

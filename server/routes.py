@@ -133,7 +133,7 @@ def get_wallet():
         
         for stock in portfolio_stocks:
             symbol = stock['symbol']
-            print(symbol)
+            # print(symbol)
             quantity = float(stock['quantity'])
             avg_cost = float(stock['avg_cost']) if stock['avg_cost'] else 0.00
             name = stock.get('company_name', symbol)
@@ -142,9 +142,9 @@ def get_wallet():
                 ticker = yf.Ticker(symbol)
                 hist = ticker.history(period="7d")
 
-                current_price = float(hist['Close'][-1]) if not hist.empty else 0.00
-                price_24h = float(hist['Close'][-2]) if len(hist) > 1 else current_price
-                price_7d = float(hist['Close'][0]) if len(hist) > 0 else current_price
+                current_price = float(hist['Close'].iloc[-1]) if not hist.empty else 0.00
+                price_24h = float(hist['Close'].iloc[-2]) if len(hist) > 1 else current_price
+                price_7d = float(hist['Close'].iloc[0]) if len(hist) > 0 else current_price
 
                 change_1h = 0.00  # Yahoo doesn't support 1h granularity
                 change_24h = ((current_price - price_24h) / price_24h * 100) if price_24h > 0 else 0.00
@@ -487,13 +487,13 @@ def get_historical_data_for_user():
         date_range = pd.date_range(start=start_date, end=end_date)
         portfolio_values = pd.DataFrame(index=date_range)
 
-        print("portfolio_values:", portfolio_values)
-        print("daily positions:", daily_positions)
+        # print("portfolio_values:", portfolio_values)
+        # print("daily positions:", daily_positions)
         # Loop through each symbol
         for symbol in daily_positions['symbol'].unique():
             hist = yf.download(symbol, start=start_date, end=end_date, auto_adjust=True)['Close']
             hist.index = hist.index.date
-            print("hist:", hist)
+            # print("hist:", hist)
 
             symbol_positions = (
                 daily_positions[daily_positions['symbol'] == symbol]
@@ -502,24 +502,24 @@ def get_historical_data_for_user():
                 .fillna(0)
             )
             
-            print("symbol_positions:", symbol_positions)
+            # print("symbol_positions:", symbol_positions)
             
             shares = symbol_positions['shares'].reindex(date_range.date, fill_value=0).ffill()
-            print("shares:",shares)
-            print(type(shares))
+            # print("shares:",shares)
+            # print(type(shares))
             prices = hist.reindex(date_range.date).ffill()
-            print("prices:",prices)
-            print(type(prices))
+            # print("prices:",prices)
+            # print(type(prices))
             # print(type(portfolio_values))
             
             df_test = shares * prices[symbol]
-            print("df_test:", df_test)
-            print(type(df_test))
+            # print("df_test:", df_test)
+            # print(type(df_test))
 
             portfolio_values[symbol] = shares * prices[symbol]
-            print(portfolio_values[symbol])
+            # print(portfolio_values[symbol])
 
-        print("portfolio_values:", portfolio_values)
+        # print("portfolio_values:", portfolio_values)
         portfolio_values['total_value'] = portfolio_values.sum(axis=1)
         result = (
             portfolio_values['total_value']
