@@ -5,8 +5,8 @@ import os
 from datetime import datetime, timedelta
 from db import init_db, dump_db
 from time import sleep
-import plotly.graph_objects as go #built on javascript, can be used on front end 
-from plotly.subplots import make_subplots
+#import plotly.graph_objects as go #built on javascript, can be used on front end 
+#from plotly.subplots import make_subplots
 import pandas as pd
 
 
@@ -235,7 +235,7 @@ def execute_trade():
         action = data['action'].lower()  # 'buy' or 'sell'
         quantity = float(data['quantity'])
         order_type = data.get('orderType', 'market')
-        limit_price = data.get('limitPrice')
+        current_price = data.get('estimatedPrice', None)
         
         if action not in ['buy', 'sell']:
             return jsonify({"error": "Action must be 'buy' or 'sell'"}), 400
@@ -245,14 +245,18 @@ def execute_trade():
         
         # Get current stock price for validation
         ticker = yf.Ticker(symbol)
-        current_price = ticker.info.get('currentPrice', ticker.info.get('regularMarketPrice', 0))
+        #current_price = ticker.info.get('currentPrice', ticker.info.get('regularMarketPrice', 0))
         
         if not current_price:
             return jsonify({"error": "Unable to get current stock price"}), 400
         
         # Calculate trade value
-        trade_price = limit_price if order_type == 'limit' and limit_price else current_price
-        trade_value = quantity * trade_price
+        trade_price = current_price
+        trade_value = quantity * current_price
+        
+    
+        if action == 'sell':
+            sell_stock(user_id, symbol, quantity, current_price)
         
         # Here you would typically:
         # 1. Check user's account balance (for buy orders)
@@ -293,10 +297,119 @@ def buy_stock():
     return jsonify({"success": True, "message": "Stock purchased successfully"})
 
 #(if qty = 0, delete)
-def sell_stock():
-    # Implementation for selling stocks
-    data = request.get_json()
-    return jsonify({"success": True, "message": "Stock sold successfully"})
+def sell_stock(user_id, symbol, quantity, current_price):
+    """Sell stock for a user"""
+    try:
+        # Input validation
+        if not user_id or not symbol or not quantity or not current_price:
+            return {"success": False, "error": "Missing required parameters"}
+        
+        if quantity <= 0:
+            return {"success": False, "error": "Quantity must be positive"}
+        
+        if current_price <= 0:
+            return {"success": False, "error": "Price must be positive"}
+        
+        # Database connection
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Check if user has enough stock to sell
+        # Join through the relationship chain: users -> accounts -> portfolios -> stocksportfolios -> stocks
+        cursor.execute("""
+            SELECT sp.id as stocksportfolio_id, sp.quantity, sp.average_cost, s.symbol, s.company_name
+            FROM users u
+            JOIN accounts a ON u.id = a.user_id
+            JOIN portfolios p ON a.id = p.account_id
+            JOIN stocksportfolios sp ON p.id = sp.portfolios_id
+            JOIN stocks s ON sp.stock_id = s.id
+            WHERE u.id = %s AND s.symbol = %s AND sp.quantity > 0
+        """, (user_id, symbol.upper()))
+        
+        stock_holding = cursor.fetchone()
+        
+        # Check if user owns this stock
+        if not stock_holding:
+            cursor.close()
+            conn.close()
+            return {"success": False, "error": f"You don't own any shares of {symbol}"}
+        
+        # Check if user has enough shares to sell
+        current_quantity = stock_holding['quantity']
+        if current_quantity < quantity:
+            cursor.close()
+            conn.close()
+            return {"success": False, "error": f"Insufficient shares. You own {current_quantity} shares but trying to sell {quantity}"}
+        
+        # Calculate remaining quantity and sale proceeds
+        remaining_quantity = current_quantity - quantity
+        sale_proceeds = quantity * current_price
+        stocksportfolio_id = stock_holding['stocksportfolio_id']
+        
+        # Start transaction for database updates
+        try:
+            # 1. Insert transaction record into stockstransactions table
+            cursor.execute("""
+                INSERT INTO stockstransactions (stocksportfolios_id, transaction_type, quantity, price, transaction_date)
+                VALUES (%s, 'sell', %s, %s, NOW())
+            """, (stocksportfolio_id, quantity, current_price))
+            conn.commit()
+                
+            # 2. Update stocksportfolios table - reduce quantity
+            if remaining_quantity > 0:
+                # Update quantity if shares remain
+                cursor.execute("""
+                    UPDATE stocksportfolios 
+                    SET quantity = %s 
+                    WHERE id = %s
+                """, (remaining_quantity, stocksportfolio_id))
+                conn.commit()
+            else:
+                # Delete the record if no shares remain (quantity = 0)
+                cursor.execute("""
+                    DELETE FROM stocksportfolios 
+                    WHERE id = %s
+                """, (stocksportfolio_id,))
+                conn.commit()
+            # 3. Update user's account balance (add sale proceeds)
+            cursor.execute("""
+                UPDATE accounts a
+                JOIN portfolios p ON a.id = p.account_id
+                JOIN stocksportfolios sp ON p.id = sp.portfolios_id
+                SET a.balance = a.balance + %s
+                WHERE sp.id = %s
+            """, (sale_proceeds, stocksportfolio_id))
+
+            conn.commit()
+            
+            cursor.close()
+            conn.close()
+            
+            # Return success with transaction details
+            return {
+                "success": True,
+                "message": f"Successfully sold {quantity} shares of {symbol} for ${sale_proceeds:.2f}",
+                "transaction_details": {
+                    "symbol": symbol,
+                    "quantity_sold": quantity,
+                    "price_per_share": current_price,
+                    "total_proceeds": sale_proceeds,
+                    "remaining_shares": remaining_quantity,
+                    "shares_deleted": remaining_quantity == 0
+                }
+            }
+            
+        except Exception as db_error:
+            # Rollback transaction on error
+            conn.rollback()
+            cursor.close()
+            conn.close()
+            print(f"Database transaction error: {db_error}")
+            return {"success": False, "error": f"Failed to complete sell transaction: {str(db_error)}"}
+        
+    except Exception as e:
+        print(f"Error in sell_stock validation: {e}")
+        return {"success": False, "error": f"Database error: {str(e)}"}
 
 
 #alpha vatnage search utility function to search stocks 
