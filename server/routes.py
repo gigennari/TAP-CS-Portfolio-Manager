@@ -232,8 +232,8 @@ def execute_trade():
         symbol = data['symbol'].upper()
         action = data['action'].lower()  # 'buy' or 'sell'
         quantity = float(data['quantity'])
-        order_type = data.get('orderType', 'market')
-        limit_price = data.get('limitPrice')
+        order_type = data.get('orderType', 'market') # market or limit 
+        price = data.get('estimatedPrice', None)
         
         if action not in ['buy', 'sell']:
             return jsonify({"error": "Action must be 'buy' or 'sell'"}), 400
@@ -249,14 +249,22 @@ def execute_trade():
             return jsonify({"error": "Unable to get current stock price"}), 400
         
         # Calculate trade value
-        trade_price = limit_price if order_type == 'limit' and limit_price else current_price
-        trade_value = quantity * trade_price
+        # send an erorr message for limit orders, sying it is not supported yet
+        if order_type == 'limit':
+            return jsonify({"error": "Limit price must be positive"}), 400
         
-        # Here you would typically:
-        # 1. Check user's account balance (for buy orders)
-        # 2. Check user's stock holdings (for sell orders)
-        # 3. Execute the trade through a broker API
-        # 4. Update the user's portfolio in the database
+        if order_type == 'market':
+            trade_price = price
+            
+        
+            # Here you would typically:
+            # 1. Check user's account balance (for buy orders)  
+            date = datetime.now().isoformat()
+            if action == 'buy':
+                buy_stock(user_id, symbol, quantity, trade_price, date)
+        
+            # 2. Check user's stock holdings (for sell orders)
+        
         
         # For now, we'll simulate a successful trade
         order_id = f"ORD{datetime.now().strftime('%Y%m%d%H%M%S')}{symbol}"
@@ -285,16 +293,89 @@ def execute_trade():
 
     
 #buy stock -> update stocksportfolio qty and avg cost (include symbol if not there yet), update accounts balance, update stcoks table if we don't have the symbol there yet,  
-def buy_stock():
+def buy_stock(user_id, symbol, quantity, price, date):
     # Implementation for buying stocks
-    data = request.get_json()
+    
+    conn = init_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT balance FROM accounts WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+    balance = result['balance'] 
+    
+    
+    #check if user has enough balance
+    if balance > (quantity * price):
+        # update account balance
+        new_balance = balance - (quantity * price)
+        
+        cursor.execute("UPDATE accounts SET balance = %s WHERE user_id = %s", (new_balance, user_id))  
+        
+        
+        # insert row on transactions table (stockportfolios_id, type, quantity, price, date)
+        cursor.execute("INSERT INTO stockstransactions (stockportfolios_id, type, quantity, price, date) VALUES (%s, %s, %s, %s, %s), (stockportfolios_id, type, quantity, price, date)")
+
+    
+        # update stocksportfolio table with new stock OR update existing stock quantity and avg cost
+        #check if stock exists in stocksportfolio
+        cursor.execute("SELECT sp.id as row_num, sp.quantity, sp.average_cost, sp.stock_id, s.symbol FROM stocksportfolios sp JOIN accounts a on a.user_id = %s JOIN portfolios p on a.id = p.account_id JOIN stocks s on s.id = sp.stock_id AND s.symbol =%s";, (user_id, symbol))
+        stock = cursor.fetchone()
+        
+        #if it exists, update quantity and avg cost
+        if stock:
+            new_quantity = stock['quantity'] + quantity
+            new_avg_cost = (stock['average_cost'] * stock['quantity'] + price * quantity) / new_quantity
+            cursor.execute("UPDATE stocksportfolios SET quantity=%s, average_cost=%s WHERE id=%s", (new_quantity, new_avg_cost, stock['stock_id']))
+         #else, insert new stock into stocksportfolio
+        else:
+            
+            #check if stock exists in stocks table
+            cursor.execute("SELECT id FROM stocks WHERE symbol = %s", (symbol,))
+            stocks_exists = cursor.fetchone()
+            if not stocks_exists:
+                #insert new stock into stocks table
+                insert_stock_in_stocks_table(symbol)
+                
+            
+            #get stock id from stocks table
+            cursor.execute("SELECT id FROM stocks WHERE symbol = %s", (symbol,))
+            stock_id = cursor.fetchone()['id']
+            
+            #get portfolio id for user 
+            cursor.execute("SELECT id FROM portfolios WHERE account_id = (SELECT id FROM accounts WHERE user_id = %s)", (user_id,)) #this will need to be changed if we have multiple portfolios per user
+            portfolio_id = cursor.fetchone()['id']            
+            #insert new stock into stocksportfolio
+            cursor.execute("INSERT INTO stocksportfolios (portfolios_id, stock_id, quantity, average_cost) VALUES (%s, %s, %s, %s)", (portfolio_id, stock_id, quantity, price))
+
+
+    cursor.close()
+    conn.close()
+    
     return jsonify({"success": True, "message": "Stock purchased successfully"})
+
+#inserts a stocks intro the stock table 
+def insert_stock_in_stocks_table(symbol):
+    #symbol, company_name, sector, industry
+    
+    ticker = yf.Ticker(symbol)
+    company_name = ticker.info.get("longName", "Unknown")   
+    sector = ticker.info.get("sector", "Unknown")
+    industry = ticker.info.get("industry", "Unknown")
+    
+    conn = init_db()
+    cursor = conn.cursor(dictionary=True)   
+    cursor.execute("INSERT INTO stocks (symbol, company_name, sector, industry) VALUES (%s, %s, %s, %s)", (symbol, company_name, sector, industry))
+    conn.commit()
+    conn.close()        
+    
 
 #(if qty = 0, delete)
 def sell_stock():
     # Implementation for selling stocks
     data = request.get_json()
     return jsonify({"success": True, "message": "Stock sold successfully"})
+
+
 
 
 #alpha vatnage search utility function to search stocks 
