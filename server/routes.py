@@ -5,8 +5,6 @@ import os
 from datetime import datetime, timedelta
 from db import init_db, dump_db
 from time import sleep
-import plotly.graph_objects as go #built on javascript, can be used on front end 
-from plotly.subplots import make_subplots
 import pandas as pd
 
 
