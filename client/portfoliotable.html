@@ -62,13 +62,28 @@
 
     <div class="container mx-auto px-4 py-8">
         <!-- Portfolio Overview Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Account Balance</p>
+                        <p class="text-3xl font-bold text-slate-900" id="accountBalance">$0.00</p>
+                        <p class="text-slate-500 text-sm font-medium mt-1">Available Cash</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
             <div class="bg-white rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-slate-500 text-sm font-medium">Total Portfolio Value</p>
                         <p class="text-3xl font-bold text-slate-900" id="totalValue">$1,234,567.89</p>
-                        <!-- <p class="text-emerald-500 text-sm font-medium mt-1">+2.34% (24h)</p> -->
+                        <p class="text-slate-500 text-sm font-medium mt-1">Invested Assets</p>
                     </div>
                     <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
                         <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +113,7 @@
                     <div>
                         <p class="text-slate-500 text-sm font-medium">Total Assets</p>
                         <p class="text-3xl font-bold text-slate-900">5</p>
-                        <!-- <p class="text-slate-500 text-sm font-medium mt-1">Crypto Holdings</p> -->
+                        <p class="text-slate-500 text-sm font-medium mt-1">Holdings</p>
                     </div>
                     <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                         <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -514,6 +529,12 @@
             `).join('');
 
             usersList.innerHTML = usersHTML;
+            
+            // Auto-select user with ID = 1 if available
+            const defaultUser = users.find(user => user.id == 1);
+            if (defaultUser) {
+                selectUser(defaultUser.id, defaultUser.username, defaultUser.name, defaultUser.email, defaultUser.account_id);
+            }
         }
 
         function selectUser(id, username, name, email, account_id){
@@ -551,7 +572,7 @@
                 document.getElementById('totalValue').textContent = 
                     `$${walletData.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-                const totalAssetsElement = document.querySelector('.grid .bg-white:nth-child(3) .text-3xl');
+                const totalAssetsElement = document.querySelector('.grid .bg-white:nth-child(4) .text-3xl');
                 if (totalAssetsElement) totalAssetsElement.textContent = walletData.count;
 
                 populateWalletTable(walletData.wallet);
@@ -574,6 +595,8 @@
                 const balanceData = await balanceResponse.json();
                 if (balanceData.balance !== undefined) {
                 console.log('User cash balance:', balanceData.balance);
+                document.getElementById('accountBalance').textContent = 
+                    `$${parseFloat(balanceData.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 }
 
             } catch (error) {
@@ -673,8 +696,8 @@
             const changePercent = totalPreviousValue > 0 ? (totalChange24h / totalPreviousValue * 100) : 0;
             
             // Update 24h change card
-            const changeValueElement = document.querySelector('.grid .bg-white:nth-child(2) .text-3xl');
-            const changePercentElement = document.querySelector('.grid .bg-white:nth-child(2) .text-emerald-500');
+            const changeValueElement = document.querySelector('.grid .bg-white:nth-child(3) .text-3xl');
+            const changePercentElement = document.querySelector('.grid .bg-white:nth-child(3) .text-emerald-500');
             
             if (changeValueElement) {
                 const changeClass = totalChange24h >= 0 ? 'text-emerald-600' : 'text-red-600';
@@ -725,8 +748,15 @@
         }
 
         function openTradeModal(symbol, name) {
-            // Redirect to homebroker with selected stock
-            window.location.href = `homebroker.html?symbol=${symbol}&name=${encodeURIComponent(name)}`;
+            // Redirect to homebroker with selected stock and current user
+            let url = `homebroker.html?symbol=${symbol}&name=${encodeURIComponent(name)}`;
+            
+            // Add current user ID if available
+            if (currentUserId) {
+                url += `&user_id=${currentUserId}`;
+            }
+            
+            window.location.href = url;
         }
 
         function showUserError(message) {
@@ -837,7 +867,17 @@
                             displayColors: true,
                             callbacks: {
                                 label: function(context) {
-                                    return context.label + ': ' + context.parsed.toFixed(1) + '%';
+                                    const sectorName = context.label;
+                                    const percentage = context.parsed.toFixed(1) + '%';
+                                    const sectorValue = sectorData[context.dataIndex].value;
+                                    const formattedValue = '$' + sectorValue.toLocaleString('en-US', { 
+                                        minimumFractionDigits: 2, 
+                                        maximumFractionDigits: 2 
+                                    });
+                                    return [
+                                        'Percentage: ' + percentage,
+                                        'Value: ' + formattedValue
+                                    ];
                                 }
                             }
                         }
@@ -863,7 +903,10 @@
                         <div class="w-3 h-3 rounded-full" style="background-color: ${colors[index]}"></div>
                         <span class="text-sm font-medium text-slate-700">${item.sector}</span>
                     </div>
-                    <span class="text-sm font-semibold text-slate-900">${item.percentage.toFixed(1)}%</span>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold text-slate-900">${item.percentage.toFixed(1)}%</div>
+                        <div class="text-xs text-slate-500">$${item.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    </div>
                 </div>
             `).join('');
             
@@ -925,6 +968,14 @@
 
             // Initialize portfolio chart with empty state
             showPortfolioChartState('empty');
+            
+            // Auto-refresh portfolio data every 30 seconds
+            setInterval(function() {
+                if (currentUserId) {
+                    console.log('Auto-refreshing portfolio data...');
+                    loadUserPortfolio(currentUserId);
+                }
+            }, 30000); // 30 seconds
         });
 
         // Portfolio Value Trend Chart
