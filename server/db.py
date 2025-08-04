@@ -19,7 +19,7 @@ def init_db():
         host='localhost',
         user='root',
         password='n3u3da!',
-        database='bygDB'
+        database='bygdb'
     )
     
     
