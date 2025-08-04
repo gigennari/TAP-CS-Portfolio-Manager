@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from db import init_db, dump_db
 from time import sleep
 import pandas as pd
+from decimal import Decimal
 
 
 portfolio_bp = Blueprint('portfolio', __name__)
@@ -222,6 +223,7 @@ def execute_trade():
     """Execute a trade order"""
     try:
         data = request.get_json()
+        print("data", data)
         
         required_fields = ['user_id', 'symbol', 'action', 'quantity']
         for field in required_fields:
@@ -231,9 +233,9 @@ def execute_trade():
         user_id = data['user_id']
         symbol = data['symbol'].upper()
         action = data['action'].lower()  # 'buy' or 'sell'
-        quantity = float(data['quantity'])
+        quantity = Decimal(data['quantity'])
         order_type = data.get('orderType', 'market') # market or limit 
-        price = data.get('estimatedPrice', None)
+        price = Decimal(data.get('estimatedPrice', None))
         
         if action not in ['buy', 'sell']:
             return jsonify({"error": "Action must be 'buy' or 'sell'"}), 400
@@ -261,29 +263,29 @@ def execute_trade():
             # 1. Check user's account balance (for buy orders)  
             date = datetime.now().isoformat()
             if action == 'buy':
-                buy_stock(user_id, symbol, quantity, trade_price, date)
+                result = buy_stock(user_id, symbol, quantity, trade_price, date)
         
             # 2. Check user's stock holdings (for sell orders)
         
         
-        # For now, we'll simulate a successful trade
-        order_id = f"ORD{datetime.now().strftime('%Y%m%d%H%M%S')}{symbol}"
+        # # For now, we'll simulate a successful trade
+        # order_id = f"ORD{datetime.now().strftime('%Y%m%d%H%M%S')}{symbol}"
         
-        trade_result = {
-            "success": True,
-            "orderId": order_id,
-            "user_id": user_id,
-            "symbol": symbol,
-            "action": action,
-            "quantity": quantity,
-            "price": trade_price,
-            "totalValue": trade_value,
-            "orderType": order_type,
-            "timestamp": datetime.now().isoformat(),
-            "status": "executed"
-        }
+        # trade_result = {
+        #     "success": True,
+        #     "orderId": order_id,
+        #     "user_id": user_id,
+        #     "symbol": symbol,
+        #     "action": action,
+        #     "quantity": quantity,
+        #     "price": trade_price,
+        #     "totalValue": trade_value,
+        #     "orderType": order_type,
+        #     "timestamp": datetime.now().isoformat(),
+        #     "status": "executed"
+        # }
         
-        return jsonify(trade_result)
+        return result, 200
         
     except ValueError as e:
         return jsonify({"error": "Invalid quantity or price format"}), 400
@@ -308,17 +310,18 @@ def buy_stock(user_id, symbol, quantity, price, date):
     if balance > (quantity * price):
         # update account balance
         new_balance = balance - (quantity * price)
+        print("new_balance", new_balance)
         
         cursor.execute("UPDATE accounts SET balance = %s WHERE user_id = %s", (new_balance, user_id))  
         
         
         # insert row on transactions table (stockportfolios_id, type, quantity, price, date)
-        cursor.execute("INSERT INTO stockstransactions (stockportfolios_id, type, quantity, price, date) VALUES (%s, %s, %s, %s, %s), (stockportfolios_id, type, quantity, price, date)")
+       
 
     
         # update stocksportfolio table with new stock OR update existing stock quantity and avg cost
         #check if stock exists in stocksportfolio
-        cursor.execute("SELECT sp.id as row_num, sp.quantity, sp.average_cost, sp.stock_id, s.symbol FROM stocksportfolios sp JOIN accounts a on a.user_id = %s JOIN portfolios p on a.id = p.account_id JOIN stocks s on s.id = sp.stock_id AND s.symbol =%s";, (user_id, symbol))
+        cursor.execute("SELECT sp.id as row_num, sp.quantity, sp.average_cost, sp.stock_id, s.symbol FROM stocksportfolios sp JOIN accounts a on a.user_id = %s JOIN portfolios p on a.id = p.account_id JOIN stocks s on s.id = sp.stock_id AND s.symbol =%s", (user_id, symbol))
         stock = cursor.fetchone()
         
         #if it exists, update quantity and avg cost
@@ -346,6 +349,8 @@ def buy_stock(user_id, symbol, quantity, price, date):
             portfolio_id = cursor.fetchone()['id']            
             #insert new stock into stocksportfolio
             cursor.execute("INSERT INTO stocksportfolios (portfolios_id, stock_id, quantity, average_cost) VALUES (%s, %s, %s, %s)", (portfolio_id, stock_id, quantity, price))
+            
+            cursor.execute("INSERT INTO stockstransactions (stockportfolios_id, type, quantity, price, date) VALUES (%s, %s, %s, %s, %s)", (stock['row_num'], 'buy', quantity, price, date))
 
 
     cursor.close()
