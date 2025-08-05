@@ -454,22 +454,15 @@ def sell_stock(user_id, symbol, quantity, current_price, date):
             """, (stocksportfolio_id, quantity, current_price))
             conn.commit()
                 
-            # 2. Update stocksportfolios table - reduce quantity
-            if remaining_quantity > 0:
+
                 # Update quantity if shares remain
-                cursor.execute("""
-                    UPDATE stocksportfolios 
-                    SET quantity = %s 
-                    WHERE id = %s
-                """, (remaining_quantity, stocksportfolio_id))
-                conn.commit()
-            else:
-                # Delete the record if no shares remain (quantity = 0)
-                cursor.execute("""
-                    DELETE FROM stocksportfolios 
-                    WHERE id = %s
-                """, (stocksportfolio_id,))
-                conn.commit()
+            cursor.execute("""
+                UPDATE stocksportfolios 
+                SET quantity = %s 
+                WHERE id = %s
+            """, (remaining_quantity, stocksportfolio_id))
+            conn.commit()
+
             # 3. Update user's account balance (add sale proceeds)
             cursor.execute("""
                 UPDATE accounts a
