@@ -293,6 +293,8 @@ def execute_trade():
 
     
 #buy stock -> update stocksportfolio qty and avg cost (include symbol if not there yet), update accounts balance, update stcoks table if we don't have the symbol there yet,  
+
+#buy stock -> update stocksportfolio qty and avg cost (include symbol if not there yet), update accounts balance, update stcoks table if we don't have the symbol there yet,  
 def buy_stock(user_id, symbol, quantity, price, date):
     # Implementation for buying stocks
     try:
