@@ -923,7 +923,7 @@
             document.getElementById('industry').textContent = data.industry;
             document.getElementById('high52').textContent = `$${(data.fiftyTwoWeekHigh || 0).toFixed(2)}`;
             document.getElementById('low52').textContent = `$${(data.fiftyTwoWeekLow || 0).toFixed(2)}`;
-            document.getElementById('dividendYield').textContent = `${(data.dividendYield || 0).toFixed(2)}%`;
+            document.getElementById('dividendYield').textContent = `${((data.dividendYield || 0) / 100).toFixed(2)}%`;
             
             // Auto-select buy/sell action if specified in URL parameters or maintain current selection
             if (window.autoSelectAction) {
