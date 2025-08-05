@@ -330,6 +330,7 @@ def buy_stock(user_id, symbol, quantity, price, date):
             # update stocksportfolio table with new stock OR update stocksportfolios existing row with new stock quantity and avg cost
             #if it exists, update quantity and avg cost
             if stock:
+                print("stock exists in stocksportfolio")
                 #update stocksportfolio with new quantity and avg cost
                 new_quantity = stock['quantity'] + quantity
                 new_avg_cost = (stock['average_cost'] * stock['quantity'] + price * quantity) / new_quantity
@@ -338,19 +339,23 @@ def buy_stock(user_id, symbol, quantity, price, date):
                                              
              #else, insert new stock into stocksportfolio
             else:
+                print("stock does not exist in stocksportfolio")
                 #check if stock exists in stocks table
                 cursor.execute("SELECT id FROM stocks WHERE symbol = %s", (symbol,))
                 stocks_exists = cursor.fetchone()
                 
                 if not stocks_exists:
+                    print("stock does not exist in stocks table, inerting new stock")
                     #insert new stock into stocks table
-                    insert_stock_in_stocks_table(symbol)
+                    insert_stock_in_stocks_table(symbol, cursor, conn)
                     #get stock id from stocks table
-                    
+                
+                cursor = conn.cursor(dictionary=True)
                 cursor.execute("SELECT id FROM stocks WHERE symbol = %s", (symbol,))
                 stock_data = cursor.fetchone()
+                print("stock_data", stock_data)
                 stock_id = stock_data['id'] 
-                print("stock_id", stock_id)
+                print("here is the stock_id", stock_id)
                          
                 #insert new stock into stocksportfolio
                 cursor.execute("INSERT INTO stocksportfolios (portfolios_id, stock_id, quantity, average_cost) VALUES (%s, %s, %s, %s)", (portfolio_id, stock_id, quantity, price))
@@ -383,19 +388,17 @@ def buy_stock(user_id, symbol, quantity, price, date):
 
     
 #inserts a stocks intro the stock table 
-def insert_stock_in_stocks_table(symbol):
+def insert_stock_in_stocks_table(symbol, cursor, conn):
     #symbol, company_name, sector, industry
     
     ticker = yf.Ticker(symbol)
     company_name = ticker.info.get("longName", "Unknown")   
     sector = ticker.info.get("sector", "Unknown")
     industry = ticker.info.get("industry", "Unknown")
-    
-    conn = init_db()
-    cursor = conn.cursor(dictionary=True)   
+      
     cursor.execute("INSERT INTO stocks (symbol, company_name, sector, industry) VALUES (%s, %s, %s, %s)", (symbol, company_name, sector, industry))
-    conn.commit()
-    conn.close()        
+    conn.commit()  
+      
     
 
 def sell_stock(user_id, symbol, quantity, current_price, date):
