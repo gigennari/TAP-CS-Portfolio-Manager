@@ -396,7 +396,6 @@ def insert_stock_in_stocks_table(symbol):
     conn.close()        
     
 
-#(if qty = 0, delete)
 def sell_stock(user_id, symbol, quantity, current_price):
     """Sell stock for a user"""
     try:
@@ -510,8 +509,6 @@ def sell_stock(user_id, symbol, quantity, current_price):
     except Exception as e:
         print(f"Error in sell_stock validation: {e}")
         return {"success": False, "error": f"Database error: {str(e)}"}
-
-
 
 
 #alpha vatnage search utility function to search stocks 
