@@ -129,7 +129,7 @@
             <!-- Portfolio Value Trend Chart -->
             <div class="bg-white rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-slate-900">Portfolio Value Trend</h3>
+                    <h3 class="text-xl font-semibold text-slate-900">Portfolio Performance & Profit Analysis</h3>
                     <div class="flex space-x-2">
                         <button class="portfolio-period-btn px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg font-medium" data-period="7">7D</button>
                         <button class="portfolio-period-btn px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg" data-period="30">30D</button>
@@ -981,7 +981,7 @@
                     console.log('Auto-refreshing portfolio data...');
                     loadUserPortfolio(currentUserId);
                 }
-            }, 30000); // 30 seconds
+            }, 60000); // 60 seconds
         });
 
         // Portfolio Value Trend Chart
@@ -998,14 +998,24 @@
             try {
                 showPortfolioChartState('loading');
                 
-                const response = await fetch(`${API_BASE}/historical-data?user_id=${userId}&days=${days}`);
-                const data = await response.json();
+                // Fetch both portfolio value and cost data
+                const [valueResponse, costResponse] = await Promise.all([
+                    fetch(`${API_BASE}/historical-data?user_id=${userId}&days=${days}`),
+                    fetch(`${API_BASE}/historical-cost?user_id=${userId}&days=${days}`)
+                ]);
                 
-                if (data.error) {
-                    throw new Error(data.error);
+                const valueData = await valueResponse.json();
+                const costData = await costResponse.json();
+                
+                if (valueData.error) {
+                    throw new Error(valueData.error);
                 }
                 
-                updatePortfolioTrendChart(data);
+                if (costData.error) {
+                    throw new Error(costData.error);
+                }
+                
+                updatePortfolioTrendChart(valueData, costData);
                 showPortfolioChartState('chart');
                 
             } catch (error) {
@@ -1014,20 +1024,22 @@
             }
         }
 
-        function updatePortfolioTrendChart(data) {
+        function updatePortfolioTrendChart(valueData, costData) {
             // Destroy existing chart if it exists
             if (portfolioTrendChart) {
                 portfolioTrendChart.destroy();
             }
 
             // Sort data by date to ensure chronological order
-            const sortedData = data.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const sortedValueData = valueData.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const sortedCostData = costData.sort((a, b) => new Date(a.date) - new Date(b.date));
             
             // Filter data to show only the requested number of days (latest days)
-            const filteredData = sortedData.slice(-currentPortfolioPeriod);
+            const filteredValueData = sortedValueData.slice(-currentPortfolioPeriod);
+            const filteredCostData = sortedCostData.slice(-currentPortfolioPeriod);
 
             // Prepare data for Chart.js
-            const labels = filteredData.map(item => {
+            const labels = filteredValueData.map(item => {
                 const date = new Date(item.date);
                 if (currentPortfolioPeriod <= 7) {
                     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -1038,7 +1050,14 @@
                 }
             });
             
-            const values = filteredData.map(item => parseFloat(item.value));
+            const values = filteredValueData.map(item => parseFloat(item.value));
+            const costs = filteredCostData.map(item => parseFloat(item.value));
+            
+            // Calculate profit (portfolio value - cost)
+            const profits = values.map((value, index) => {
+                const cost = costs[index] || 0;
+                return value - cost;
+            });
             
             // Calculate percentage change from first value for better visualization
             const firstValue = values[0] || 0;
@@ -1063,7 +1082,32 @@
                             pointBorderColor: '#ffffff',
                             pointBorderWidth: 2,
                             pointRadius: 4,
-                            pointHoverRadius: 6
+                            pointHoverRadius: 6,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Total Cost',
+                            data: costs,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4,
+                            pointBackgroundColor: '#f59e0b',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Profit/Loss',
+                            data: profits,
+                            type: 'bar',
+                            backgroundColor: profits.map(profit => profit >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
+                            borderColor: profits.map(profit => profit >= 0 ? '#10b981' : '#ef4444'),
+                            borderWidth: 1,
+                            yAxisID: 'y1'
                         }
                     ]
                 },
@@ -1072,7 +1116,15 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
                         },
                         tooltip: {
                             mode: 'index',
@@ -1083,19 +1135,26 @@
                             borderColor: '#374151',
                             borderWidth: 1,
                             cornerRadius: 8,
-                            displayColors: false,
+                            displayColors: true,
                             callbacks: {
                                 title: function(context) {
                                     return context[0].label;
                                 },
                                 label: function(context) {
                                     const value = context.parsed.y;
-                                    const change = firstValue > 0 ? ((value - firstValue) / firstValue) * 100 : 0;
-                                    const changeText = change >= 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
-                                    return [
-                                        `Value: $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                                        `Change: ${changeText}`
-                                    ];
+                                    const datasetLabel = context.dataset.label;
+                                    
+                                    if (datasetLabel === 'Portfolio Value') {
+                                        const change = firstValue > 0 ? ((value - firstValue) / firstValue) * 100 : 0;
+                                        const changeText = change >= 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
+                                        return `${datasetLabel}: $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${changeText})`;
+                                    } else if (datasetLabel === 'Total Cost') {
+                                        return `${datasetLabel}: $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                                    } else if (datasetLabel === 'Profit/Loss') {
+                                        const sign = value >= 0 ? '+' : '';
+                                        return `${datasetLabel}: ${sign}$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                                    }
+                                    return `${datasetLabel}: $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                                 }
                             }
                         }
@@ -1115,6 +1174,9 @@
                             }
                         },
                         y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
                             grid: {
                                 color: '#f1f5f9'
                             },
@@ -1125,6 +1187,27 @@
                                 },
                                 callback: function(value) {
                                     return '$' + value.toLocaleString('en-US', { 
+                                        minimumFractionDigits: 0, 
+                                        maximumFractionDigits: 0 
+                                    });
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            ticks: {
+                                color: '#64748b',
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    const sign = value >= 0 ? '+' : '';
+                                    return sign + '$' + value.toLocaleString('en-US', { 
                                         minimumFractionDigits: 0, 
                                         maximumFractionDigits: 0 
                                     });
