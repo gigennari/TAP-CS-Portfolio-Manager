@@ -260,12 +260,10 @@ def execute_trade():
             date = datetime.now().isoformat()
             if action == 'buy':
                 result = buy_stock(user_id, symbol, quantity, trade_price, date)
-
-            elif action == 'sell':
-                result = sell_stock(user_id, symbol, quantity, trade_price)
             # 2. Check user's stock holdings (for sell orders)
-            if action == 'sell':
+            elif action == 'sell':
                 result = sell_stock(user_id, symbol, quantity, trade_price, date)
+           
         
         
         # # For now, we'll simulate a successful trade
@@ -381,8 +379,6 @@ def buy_stock(user_id, symbol, quantity, price, date):
         return jsonify({"error": "Failed to buy stock"}), 500
     
 
-def sell_stock(user_id, symbol, quantity, price, date):
-    return jsonify({"success": True, "message": "Sell operation not implemented yet"}), 501
     
 #inserts a stocks intro the stock table 
 def insert_stock_in_stocks_table(symbol):
@@ -400,7 +396,7 @@ def insert_stock_in_stocks_table(symbol):
     conn.close()        
     
 
-def sell_stock(user_id, symbol, quantity, current_price):
+def sell_stock(user_id, symbol, quantity, current_price, date):
     """Sell stock for a user"""
     try:
         # Input validation
