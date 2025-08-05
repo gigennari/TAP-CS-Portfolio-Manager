@@ -453,10 +453,16 @@
             const symbol = urlParams.get('symbol');
             const name = urlParams.get('name');
             const userId = urlParams.get('user_id');
+            const action = urlParams.get('action');
             
             // Store the user ID to auto-select after users are loaded
             if (userId) {
                 window.autoSelectUserId = userId;
+            }
+            
+            // Store the action to auto-select after stock is loaded
+            if (action && (action === 'buy' || action === 'sell')) {
+                window.autoSelectAction = action;
             }
             
             if (symbol) {
@@ -735,6 +741,7 @@
                 currentStock = stockData;
                 
                 displayStockInfo(stockData);
+                console.log('Loaded stock data:', stockData);
                 await loadStockChart(symbol, '1D');
                 
                 stockInfo.classList.remove('hidden');
@@ -760,24 +767,91 @@
         }
 
         async function mockGetStockData(symbol) {
-            // Mock data for demonstration
+            // Mock data for demonstration - using more realistic base prices for major stocks
+            const basePrices = {
+                'AAPL': 175,
+                'MSFT': 380,
+                'GOOGL': 140,
+                'AMZN': 145,
+                'TSLA': 240,
+                'META': 320,
+                'NVDA': 480,
+                'NFLX': 450,
+                'AMD': 140,
+                'INTC': 45
+            };
+            
+            // Get a realistic base price for the stock
+            const basePrice = basePrices[symbol] || 100;
+            
+            // Add some realistic variation (±5%)
+            const priceVariation = (Math.random() - 0.5) * 0.1; // ±5%
+            const currentPrice = basePrice * (1 + priceVariation);
+            
+            // Calculate realistic change (±3%)
+            const change = (Math.random() - 0.5) * currentPrice * 0.06; // ±3% of current price
+            const changePercent = (change / currentPrice) * 100;
+            
+            // More realistic market cap based on current price and typical shares outstanding
+            const sharesOutstanding = {
+                'AAPL': 15500000000,    // ~15.5B shares
+                'MSFT': 7400000000,     // ~7.4B shares  
+                'GOOGL': 12600000000,   // ~12.6B shares
+                'AMZN': 10700000000,    // ~10.7B shares
+                'TSLA': 3200000000,     // ~3.2B shares
+                'META': 2600000000,     // ~2.6B shares
+                'NVDA': 2500000000,     // ~2.5B shares
+                'NFLX': 440000000,      // ~440M shares
+                'AMD': 1600000000,      // ~1.6B shares
+                'INTC': 4200000000      // ~4.2B shares
+            };
+            
+            const shares = sharesOutstanding[symbol] || 1000000000; // Default 1B shares
+            const marketCap = currentPrice * shares;
+            
+            // More realistic P/E ratios for different sectors
+            const peRatios = {
+                'AAPL': 25 + Math.random() * 10,    // 25-35
+                'MSFT': 28 + Math.random() * 8,     // 28-36
+                'GOOGL': 20 + Math.random() * 10,   // 20-30
+                'AMZN': 40 + Math.random() * 20,    // 40-60
+                'TSLA': 50 + Math.random() * 30,    // 50-80
+                'META': 15 + Math.random() * 10,    // 15-25
+                'NVDA': 60 + Math.random() * 20,    // 60-80
+                'NFLX': 30 + Math.random() * 15,    // 30-45
+                'AMD': 35 + Math.random() * 15,     // 35-50
+                'INTC': 12 + Math.random() * 8      // 12-20
+            };
+            
+            // More realistic volume ranges
+            const volumeRanges = {
+                'AAPL': 50000000 + Math.random() * 50000000,    // 50-100M
+                'MSFT': 20000000 + Math.random() * 30000000,    // 20-50M
+                'GOOGL': 15000000 + Math.random() * 20000000,   // 15-35M
+                'AMZN': 25000000 + Math.random() * 25000000,    // 25-50M
+                'TSLA': 80000000 + Math.random() * 70000000,    // 80-150M
+                'META': 15000000 + Math.random() * 20000000,    // 15-35M
+                'NVDA': 30000000 + Math.random() * 40000000,    // 30-70M
+                'NFLX': 5000000 + Math.random() * 10000000,     // 5-15M
+                'AMD': 40000000 + Math.random() * 40000000,     // 40-80M
+                'INTC': 20000000 + Math.random() * 30000000     // 20-50M
+            };
+
             const mockData = {
                 symbol: symbol,
                 name: getCompanyName(symbol),
-                currentPrice: Math.random() * 200 + 50,
-                change: (Math.random() - 0.5) * 10,
-                changePercent: (Math.random() - 0.5) * 5,
-                marketCap: Math.random() * 1000000000000 + 100000000000,
-                peRatio: Math.random() * 30 + 10,
-                volume: Math.random() * 100000000 + 10000000,
+                currentPrice: currentPrice,
+                change: change,
+                changePercent: changePercent,
+                marketCap: marketCap,
+                peRatio: peRatios[symbol] || (15 + Math.random() * 20), // Default 15-35
+                volume: volumeRanges[symbol] || (10000000 + Math.random() * 40000000), // Default 10-50M
                 sector: getSector(symbol),
                 industry: getIndustry(symbol),
-                high52: Math.random() * 250 + 100,
-                low52: Math.random() * 100 + 20,
-                dividendYield: Math.random() * 5
+                fiftyTwoWeekHigh: currentPrice * (1.2 + Math.random() * 0.3), // 20-50% higher than current
+                fiftyTwoWeekLow: currentPrice * (0.6 + Math.random() * 0.2),  // 20-40% lower than current
+                dividendYield: Math.random() * 3 // 0-3% dividend yield
             };
-            
-            mockData.changePercent = (mockData.change / mockData.currentPrice) * 100;
             
             return mockData;
         }
@@ -847,9 +921,18 @@
             document.getElementById('companyName').textContent = data.name;
             document.getElementById('sector').textContent = data.sector;
             document.getElementById('industry').textContent = data.industry;
-            document.getElementById('high52').textContent = `$${data.high52.toFixed(2)}`;
-            document.getElementById('low52').textContent = `$${data.low52.toFixed(2)}`;
-            document.getElementById('dividendYield').textContent = `${data.dividendYield.toFixed(2)}%`;
+            document.getElementById('high52').textContent = `$${(data.fiftyTwoWeekHigh || 0).toFixed(2)}`;
+            document.getElementById('low52').textContent = `$${(data.fiftyTwoWeekLow || 0).toFixed(2)}`;
+            document.getElementById('dividendYield').textContent = `${(data.dividendYield || 0).toFixed(2)}%`;
+            
+            // Auto-select buy/sell action if specified in URL parameters or maintain current selection
+            if (window.autoSelectAction) {
+                setTradeAction(window.autoSelectAction);
+                // Don't clear the flag - keep the action persistent for subsequent stock searches
+            } else if (!tradeAction) {
+                // If no action is selected yet, default to 'buy'
+                setTradeAction('buy');
+            }
         }
 
         function formatLargeNumber(num) {
@@ -979,8 +1062,9 @@
             const config = periods[period] || periods['1D'];
             const labels = [];
             const data = [];
-            const basePrice = currentStock ? currentStock.currentPrice : 100;
+            const currentPrice = currentStock ? currentStock.currentPrice : 100;
             
+            // Generate historical prices that lead to the current price
             for (let i = 0; i < config.points; i++) {
                 const date = new Date();
                 if (config.interval === 'hour') {
@@ -991,10 +1075,29 @@
                     labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
                 }
                 
-                // Generate realistic price movement
+                // Generate realistic price movement that converges to current price
                 const volatility = 0.02; // 2% volatility
-                const trend = (Math.random() - 0.5) * 0.001; // Small trend
-                const price = basePrice * (1 + (Math.random() - 0.5) * volatility + trend * i);
+                const progressToPresent = i / (config.points - 1); // 0 to 1
+                
+                // Start from a base price and gradually move toward current price
+                const startPrice = currentPrice * (0.95 + Math.random() * 0.1); // Start within ±5% of current
+                const targetPrice = currentPrice;
+                
+                // Interpolate between start and target with some random walk
+                const baseInterpolation = startPrice + (targetPrice - startPrice) * progressToPresent;
+                const randomWalk = (Math.random() - 0.5) * volatility * currentPrice * (1 - progressToPresent * 0.5);
+                
+                let price;
+                if (i === config.points - 1) {
+                    // Last point should be exactly the current price
+                    price = currentPrice;
+                } else {
+                    price = baseInterpolation + randomWalk;
+                    // Ensure price doesn't go negative or too extreme
+                    price = Math.max(price, currentPrice * 0.5);
+                    price = Math.min(price, currentPrice * 1.5);
+                }
+                
                 data.push(price);
             }
             
@@ -1003,6 +1106,9 @@
 
         function setTradeAction(action) {
             tradeAction = action;
+            // Persist the action selection for subsequent stock searches
+            window.autoSelectAction = action;
+            
             if (action === 'buy') {
                 buyBtn.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium';
                 sellBtn.className = 'px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400 transition-colors font-medium';
@@ -1079,9 +1185,10 @@
                     
                     alert('Order placed successfully!');
                     
-                    // Reset form
+                    // Reset form but maintain the current action selection
                     document.getElementById('tradeForm').reset();
-                    setTradeAction('buy');
+                    // Keep the current action (buy/sell) selected for convenience
+                    setTradeAction(tradeAction);
                     estimatedTotal.textContent = '$0.00';
                     
                 } catch (error) {
