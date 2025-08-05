@@ -245,6 +245,32 @@
                                         Sell
                                     </button>
                                 </div>
+                                <!-- Holdings Info for Sell Orders -->
+                                <div id="holdingsInfo" class="hidden mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span class="text-sm font-medium text-amber-800">Your Holdings:</span>
+                                        <span class="text-sm font-bold text-amber-900" id="currentHoldings">Loading...</span>
+                                    </div>
+                                </div>
+                                <!-- Balance Info for Buy Orders -->
+                                <div id="balanceInfo" class="hidden mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center space-x-2">
+                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                            </svg>
+                                            <span class="text-sm font-medium text-green-800">Available Balance:</span>
+                                            <span class="text-sm font-bold text-green-900" id="currentBalance">Loading...</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2 ml-6">
+                                            <span class="text-xs font-medium text-green-700">Max affordable:</span>
+                                            <span class="text-xs font-bold text-green-800" id="maxAffordable">-</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
                             <div>
@@ -1109,14 +1135,89 @@
             // Persist the action selection for subsequent stock searches
             window.autoSelectAction = action;
             
+            const holdingsInfo = document.getElementById('holdingsInfo');
+            const balanceInfo = document.getElementById('balanceInfo');
+            
             if (action === 'buy') {
                 buyBtn.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium';
                 sellBtn.className = 'px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400 transition-colors font-medium';
+                // Hide holdings info and show balance info for buy orders
+                holdingsInfo.classList.add('hidden');
+                if (currentStock && currentUserId) {
+                    balanceInfo.classList.remove('hidden');
+                    updateCurrentBalance();
+                }
             } else {
                 sellBtn.className = 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium';
                 buyBtn.className = 'px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400 transition-colors font-medium';
+                // Hide balance info and show holdings info for sell orders
+                balanceInfo.classList.add('hidden');
+                if (currentStock && currentUserId) {
+                    holdingsInfo.classList.remove('hidden');
+                    updateCurrentHoldings();
+                }
             }
             updateEstimatedTotal();
+        }
+
+        async function updateCurrentHoldings() {
+            if (!currentStock || !currentUserId) return;
+            
+            const currentHoldingsElement = document.getElementById('currentHoldings');
+            currentHoldingsElement.textContent = 'Loading...';
+            
+            try {
+                const holding = await getUserStockHolding(currentUserId, currentStock.symbol);
+                if (holding > 0) {
+                    currentHoldingsElement.textContent = `${holding.toLocaleString()} shares`;
+                    currentHoldingsElement.className = 'text-sm font-bold text-amber-900';
+                } else {
+                    currentHoldingsElement.textContent = 'You don\'t own any shares';
+                    currentHoldingsElement.className = 'text-sm font-bold text-red-600';
+                }
+            } catch (error) {
+                currentHoldingsElement.textContent = 'Error loading holdings';
+                currentHoldingsElement.className = 'text-sm font-bold text-red-600';
+            }
+        }
+
+        async function updateCurrentBalance() {
+            if (!currentUserId) return;
+            
+            const currentBalanceElement = document.getElementById('currentBalance');
+            const maxAffordableElement = document.getElementById('maxAffordable');
+            currentBalanceElement.textContent = 'Loading...';
+            maxAffordableElement.textContent = '-';
+            
+            try {
+                const balance = await getUserAccountBalance(currentUserId);
+                if (balance > 0) {
+                    currentBalanceElement.textContent = `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    currentBalanceElement.className = 'text-sm font-bold text-green-900';
+                    
+                    // Calculate max affordable quantity if stock is loaded
+                    if (currentStock && currentStock.currentPrice > 0) {
+                        const maxQuantity = balance / currentStock.currentPrice;
+                        if (maxQuantity >= 0.01) {
+                            maxAffordableElement.textContent = `${maxQuantity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} shares`;
+                            maxAffordableElement.className = 'text-xs font-bold text-green-800';
+                        } else {
+                            maxAffordableElement.textContent = 'Cannot afford 0.01 shares';
+                            maxAffordableElement.className = 'text-xs font-bold text-red-600';
+                        }
+                    }
+                } else {
+                    currentBalanceElement.textContent = 'Insufficient funds';
+                    currentBalanceElement.className = 'text-sm font-bold text-red-600';
+                    maxAffordableElement.textContent = '0 shares';
+                    maxAffordableElement.className = 'text-xs font-bold text-red-600';
+                }
+            } catch (error) {
+                currentBalanceElement.textContent = 'Error loading balance';
+                currentBalanceElement.className = 'text-sm font-bold text-red-600';
+                maxAffordableElement.textContent = 'Error';
+                maxAffordableElement.className = 'text-xs font-bold text-red-600';
+            }
         }
 
         function handleOrderTypeChange() {
@@ -1143,6 +1244,40 @@
             estimatedTotal.textContent = `$${total.toFixed(2)}`;
         }
 
+        async function getUserStockHolding(userId, symbol) {
+            try {
+                const response = await fetch(`${API_BASE}/wallet?user_id=${userId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                if (data.wallet && Array.isArray(data.wallet)) {
+                    const holding = data.wallet.find(stock => stock.symbol.toLowerCase() === symbol.toLowerCase());
+                    return holding ? holding.quantity : 0;
+                }
+                return 0;
+            } catch (error) {
+                console.error('Error fetching user stock holding:', error);
+                return 0;
+            }
+        }
+
+        async function getUserAccountBalance(userId) {
+            try {
+                const response = await fetch(`${API_BASE}/balance?user_id=${userId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data.balance || 0;
+            } catch (error) {
+                console.error('Error fetching user account balance:', error);
+                return 0;
+            }
+        }
+
         async function handleTradeSubmit(e) {
             e.preventDefault();
             
@@ -1156,11 +1291,72 @@
                 return;
             }
             
+            const requestedQuantity = parseFloat(quantity.value);
+            
+            // Validate sell orders - check if user has enough shares
+            if (tradeAction === 'sell') {
+                try {
+                    showLoading(true);
+                    const currentHolding = await getUserStockHolding(currentUserId, currentStock.symbol);
+                    showLoading(false);
+                    
+                    if (currentHolding === 0) {
+                        alert(`❌ Cannot sell ${currentStock.symbol}\n\nYou don't own any shares of ${currentStock.symbol}.`);
+                        return;
+                    }
+                    
+                    if (currentHolding < requestedQuantity) {
+                        alert(`❌ Insufficient shares to sell\n\n` +
+                              `You own: ${currentHolding.toLocaleString()} shares\n` +
+                              `Trying to sell: ${requestedQuantity.toLocaleString()} shares\n\n` +
+                              `Please reduce the quantity to ${currentHolding.toLocaleString()} or less.`);
+                        return;
+                    }
+                } catch (error) {
+                    showLoading(false);
+                    alert('❌ Error checking your stock holdings. Please try again.');
+                    return;
+                }
+            }
+            
+            // Validate buy orders - check if user has enough balance
+            if (tradeAction === 'buy') {
+                try {
+                    showLoading(true);
+                    const currentBalance = await getUserAccountBalance(currentUserId);
+                    showLoading(false);
+                    
+                    // Calculate the total cost of the purchase
+                    const stockPrice = orderType.value === 'limit' && document.getElementById('limitPrice').value 
+                        ? parseFloat(document.getElementById('limitPrice').value)
+                        : currentStock.currentPrice;
+                    const totalCost = requestedQuantity * stockPrice;
+                    
+                    if (currentBalance === 0) {
+                        alert(`❌ Cannot buy ${currentStock.symbol}\n\nYour account balance is $0.00.`);
+                        return;
+                    }
+                    
+                    if (currentBalance < totalCost) {
+                        alert(`❌ Insufficient funds to buy\n\n` +
+                              `Available balance: $${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n` +
+                              `Total cost: $${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n` +
+                              `Shortfall: $${(totalCost - currentBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n\n` +
+                              `Please reduce the quantity or add funds to your account.`);
+                        return;
+                    }
+                } catch (error) {
+                    showLoading(false);
+                    alert('❌ Error checking your account balance. Please try again.');
+                    return;
+                }
+            }
+            
             const tradeData = {
                 user_id: currentUserId,
                 symbol: currentStock.symbol,
                 action: tradeAction,
-                quantity: parseFloat(quantity.value),
+                quantity: requestedQuantity,
                 orderType: orderType.value,
                 limitPrice: orderType.value === 'limit' ? parseFloat(document.getElementById('limitPrice').value) : null,
                 estimatedPrice: currentStock.currentPrice

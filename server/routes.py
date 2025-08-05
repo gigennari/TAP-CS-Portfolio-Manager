@@ -747,4 +747,69 @@ def get_historical_data_for_user():
         return jsonify({"error": f"Failed to get historical data: {e}"}), 500
 
         
-            
+@portfolio_bp.route('/historical-cost', methods=['GET'])
+def get_historical_cost_for_user():
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+
+        query = """
+            SELECT t.transaction_type, t.quantity, t.price, t.transaction_date
+            FROM stockstransactions t
+            JOIN stocksportfolios sp ON t.stocksportfolios_id = sp.id
+            JOIN portfolios p ON sp.portfolios_id = p.id
+            JOIN accounts a ON p.account_id = a.id
+            JOIN users u ON a.user_id = u.id
+            WHERE u.id = %s
+              AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+            ORDER BY t.transaction_date;
+        """
+        cursor.execute(query, (user_id,))
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        if not rows:
+            return jsonify([])
+
+        df = pd.DataFrame(rows)
+        df['transaction_date'] = pd.to_datetime(df['transaction_date'])
+        df['date'] = df['transaction_date'].dt.date
+
+        # Compute signed cost per transaction
+        df['signed_cost'] = df.apply(
+            lambda x: x['quantity'] * float(x['price']) if x['transaction_type'] == 'buy' else -x['quantity'] * float(x['price']),
+            axis=1
+        )
+
+        # Aggregate signed cost by day
+        daily_cost = df.groupby('date')['signed_cost'].sum()
+
+        # Generate full date range
+        start_date = datetime.today().date() - timedelta(days=365)
+        end_date = datetime.today().date()
+        date_range = pd.date_range(start=start_date, end=end_date)
+        cost_df = pd.DataFrame(index=date_range)
+        cost_df.index.name = 'date'
+
+        # Fill missing dates and compute cumulative spend
+        cost_df['daily_cost'] = daily_cost.reindex(date_range.date, fill_value=0)
+        cost_df['total_cost'] = cost_df['daily_cost'].cumsum()
+
+        result = (
+            cost_df['total_cost']
+            .reset_index()
+            .rename(columns={'total_cost': 'value'})
+            .to_dict(orient='records')
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error getting historical cost: {e}")
+        return jsonify({"error": f"Failed to get historical cost: {e}"}), 500
+
