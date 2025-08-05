@@ -308,62 +308,59 @@ def buy_stock(user_id, symbol, quantity, price, date):
         
         #check if user has enough balance
         if balance > (quantity * price):
-            # update account balance
+            
+            # Deduct the amount from user's balance
             new_balance = balance - (quantity * price)
             print("new_balance", new_balance)
-            
             cursor.execute("UPDATE accounts SET balance = %s WHERE user_id = %s", (new_balance, user_id))  
             conn.commit()
-            
-            
-            # insert row on transactions table (stocksportfolios_id, type, quantity, price, date)
-           
 
-        
-            # update stocksportfolio table with new stock OR update existing stock quantity and avg cost
-            #check if stock exists in stocksportfolio
-            cursor.execute("SELECT sp.id as row_num, sp.quantity, sp.average_cost, sp.stock_id, s.symbol FROM stocksportfolios sp JOIN accounts a on a.user_id = %s JOIN portfolios p on a.id = p.account_id JOIN stocks s on s.id = sp.stock_id AND s.symbol =%s", (user_id, symbol))
-            stock = cursor.fetchone()
-            stock_id = stock['stock_id'] if stock else None
             #get portfolio id for user 
             cursor.execute("SELECT id FROM portfolios WHERE account_id = (SELECT id FROM accounts WHERE user_id = %s)", (user_id,)) #this will need to be changed if we have multiple portfolios per user
             portfolio_id = cursor.fetchone()['id']
             print("portfolio_id", portfolio_id)
+        
             
+            #check if stock exists in stocksportfolios for that given user
+            cursor.execute("SELECT sp.id as row_num, sp.quantity, sp.average_cost, sp.stock_id, s.symbol FROM stocksportfolios sp JOIN accounts a on a.user_id = %s JOIN portfolios p on a.id = p.account_id JOIN stocks s on s.id = sp.stock_id AND s.symbol =%s", (user_id, symbol))
+            stock = cursor.fetchone()
+            row_num_on_stocksportfolio = stock['row_num'] if stock else None
+            print("row_num_on_stocksportfolio", row_num_on_stocksportfolio)
+            
+            # update stocksportfolio table with new stock OR update stocksportfolios existing row with new stock quantity and avg cost
             #if it exists, update quantity and avg cost
             if stock:
+                #update stocksportfolio with new quantity and avg cost
                 new_quantity = stock['quantity'] + quantity
                 new_avg_cost = (stock['average_cost'] * stock['quantity'] + price * quantity) / new_quantity
-                cursor.execute("UPDATE stocksportfolios SET quantity=%s, average_cost=%s WHERE id=%s", (new_quantity, new_avg_cost, stock['row_num']))
+                cursor.execute("UPDATE stocksportfolios SET quantity=%s, average_cost=%s WHERE id=%s", (new_quantity, new_avg_cost, row_num_on_stocksportfolio))
                 conn.commit()
-                stock_id = stock['stock_id']              
+                                             
              #else, insert new stock into stocksportfolio
             else:
                 #check if stock exists in stocks table
                 cursor.execute("SELECT id FROM stocks WHERE symbol = %s", (symbol,))
                 stocks_exists = cursor.fetchone()
+                
                 if not stocks_exists:
                     #insert new stock into stocks table
                     insert_stock_in_stocks_table(symbol)
+                    #get stock id from stocks table
                     
-                #get stock id from stocks table
                 cursor.execute("SELECT id FROM stocks WHERE symbol = %s", (symbol,))
-                new_stock_id = cursor.fetchone()
-                print("new_stock_id", new_stock_id)
-                stock_id = new_stock_id['id']
+                stock_data = cursor.fetchone()
+                stock_id = stock_data['id'] 
                 print("stock_id", stock_id)
-                            
+                         
                 #insert new stock into stocksportfolio
                 cursor.execute("INSERT INTO stocksportfolios (portfolios_id, stock_id, quantity, average_cost) VALUES (%s, %s, %s, %s)", (portfolio_id, stock_id, quantity, price))
                 conn.commit()
+                row_num_on_stocksportfolio = cursor.lastrowid
+                print("row_num_on_stocksportfolio after insert", row_num_on_stocksportfolio)
                 
-                
-            # Get the ID of the newly inserted stocksportfolio record
-            stocksportfolios_id = cursor.execute("SELECT id from stocksportfolios WHERE portfolios_id = %s AND stock_id = %s", (portfolio_id, stock_id))['id']
-            print("stcoksportfolio_id", stocksportfolios_id)
             
             # insert transaction into stockstransactions table
-            cursor.execute("INSERT INTO stockstransactions (stocksportfolios_id, transaction_type, quantity, price, transaction_date) VALUES (%s, %s, %s, %s, %s)", (stocksportfolios_id, 'buy', quantity, price, date))
+            cursor.execute("INSERT INTO stockstransactions (stocksportfolios_id, transaction_type, quantity, price, transaction_date) VALUES (%s, %s, %s, %s, %s)", (row_num_on_stocksportfolio, 'buy', quantity, price, date))
             conn.commit()
             
             # Commit the transaction
