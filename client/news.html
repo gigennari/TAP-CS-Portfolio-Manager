@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market News - Portfolio Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="config.js"></script>
+    <style>
+        .news-image {
+            transition: transform 0.3s ease;
+        }
+        .news-image:hover {
+            transform: scale(1.05);
+        }
+        .news-card {
+            transition: all 0.3s ease;
+        }
+        .news-card:hover {
+            transform: translateY(-2px);
+        }
+        .loading-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <!-- Header with Navigation -->
+    <header class="bg-white shadow-sm border-b border-slate-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">Market News</h1>
+                    <p class="text-slate-600 text-sm mt-1">Stay updated with the latest financial news</p>
+                </div>
+                
+                <!-- Navigation Menu -->
+                <nav class="flex items-center space-x-4">
+                    <a href="portfoliotable.html" class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium">
+                        Portfolio
+                    </a>
+                    <a href="homebroker.html" class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium">
+                        Trade
+                    </a>
+                    <a href="news.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium">
+                        News
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- News Feed Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-900">Latest Market News</h2>
+                    <p class="text-slate-600 mt-2">Real-time financial news and market updates</p>
+                </div>
+                <button 
+                    id="refreshBtn" 
+                    class="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="flex items-center justify-center py-12">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-slate-600 font-medium text-lg">Loading latest news...</span>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+            <div class="flex items-center space-x-3">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h3 class="text-red-800 font-medium">Failed to load news</h3>
+                    <p class="text-red-600 text-sm mt-1" id="errorMessage">Unable to fetch the latest news. Please try again.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Feed Container -->
+        <div id="newsFeed" class="hidden space-y-6">
+            <!-- News articles will be populated here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-12">
+            <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H14"></path>
+            </svg>
+            <h3 class="text-xl font-medium text-slate-900 mb-2">No news available</h3>
+            <p class="text-slate-600">Check back later for the latest market updates.</p>
+        </div>
+    </div>
+
+    <script>
+        class NewsManager {
+            constructor() {
+                this.loadingState = document.getElementById('loadingState');
+                this.errorState = document.getElementById('errorState');
+                this.newsFeed = document.getElementById('newsFeed');
+                this.emptyState = document.getElementById('emptyState');
+                this.refreshBtn = document.getElementById('refreshBtn');
+                
+                this.init();
+            }
+
+            init() {
+                this.loadNews();
+                this.refreshBtn.addEventListener('click', () => this.loadNews());
+            }
+
+            showLoading() {
+                this.loadingState.classList.remove('hidden');
+                this.errorState.classList.add('hidden');
+                this.newsFeed.classList.add('hidden');
+                this.emptyState.classList.add('hidden');
+            }
+
+            showError(message) {
+                this.loadingState.classList.add('hidden');
+                this.errorState.classList.remove('hidden');
+                this.newsFeed.classList.add('hidden');
+                this.emptyState.classList.add('hidden');
+                document.getElementById('errorMessage').textContent = message;
+            }
+
+            showNews(articles) {
+                this.loadingState.classList.add('hidden');
+                this.errorState.classList.add('hidden');
+                
+                if (articles.length === 0) {
+                    this.emptyState.classList.remove('hidden');
+                    this.newsFeed.classList.add('hidden');
+                } else {
+                    this.emptyState.classList.add('hidden');
+                    this.newsFeed.classList.remove('hidden');
+                    this.renderNews(articles);
+                }
+            }
+
+            async loadNews() {
+                this.showLoading();
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/news`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const articles = await response.json();
+                    this.showNews(articles);
+                    
+                } catch (error) {
+                    console.error('Error loading news:', error);
+                    this.showError('Unable to fetch the latest news. Please check your connection and try again.');
+                }
+            }
+
+            renderNews(articles) {
+                this.newsFeed.innerHTML = articles.map((article, index) => `
+                    <article class="news-card bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        ${article.image ? `
+                            <div class="relative h-48 overflow-hidden">
+                                <img 
+                                    src="${article.image}" 
+                                    alt="${article.title}"
+                                    class="news-image w-full h-full object-cover"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                >
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                                <div class="absolute top-4 right-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/90 text-slate-800">
+                                        ${article.category || 'News'}
+                                    </span>
+                                </div>
+                                <!-- Fallback placeholder -->
+                                <div class="absolute inset-0 hidden items-center justify-center bg-slate-100">
+                                    <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-semibold text-slate-900 mb-2 leading-tight">
+                                        <a href="${article.link}" target="_blank" rel="noopener noreferrer" 
+                                           class="hover:text-indigo-600 transition-colors">
+                                            ${article.title}
+                                        </a>
+                                    </h3>
+                                    <div class="flex items-center space-x-4 text-sm text-slate-500">
+                                        <div class="flex items-center space-x-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <span>${this.formatDate(article.published)}</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                            </svg>
+                                            <span>Yahoo Finance</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                                                #${index + 1}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${article.summary ? `
+                                <div class="mb-4">
+                                    <p class="text-slate-600 leading-relaxed">${this.truncateText(this.stripHtml(article.summary), 200)}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span class="text-sm text-slate-500 font-medium">Live</span>
+                                </div>
+                                <a href="${article.link}" target="_blank" rel="noopener noreferrer" 
+                                   class="inline-flex items-center space-x-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors text-sm font-medium">
+                                    <span>Read Full Article</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+            }
+
+            formatDate(dateString) {
+                try {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+                    
+                    if (diffInHours < 1) {
+                        const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+                        return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes} minutes ago`;
+                    } else if (diffInHours < 24) {
+                        return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+                    } else {
+                        return date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+                        });
+                    }
+                } catch (error) {
+                    return dateString;
+                }
+            }
+
+            truncateText(text, maxLength) {
+                if (text.length <= maxLength) return text;
+                return text.substring(0, maxLength).trim() + '...';
+            }
+
+            stripHtml(html) {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = html;
+                return tmp.textContent || tmp.innerText || '';
+            }
+        }
+
+        // Initialize the news manager when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new NewsManager();
+        });
+    </script>
+</body>
+</html>

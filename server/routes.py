@@ -7,13 +7,17 @@ from db import init_db, dump_db
 from time import sleep
 import pandas as pd
 from decimal import Decimal
-
+import feedparser
+# import API keys from Python config
+from config import CONFIG, RANDOM_STOCKS
+import random
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
-# Alpha Vantage config
-ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY', 'YD0AVPAM5ADQLFPS')
-ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query'
+# API config from Python config file
+ALPHA_VANTAGE_API_KEY = CONFIG.ALPHA_VANTAGE_API_KEY
+ALPHA_VANTAGE_BASE_URL = CONFIG.ALPHA_VANTAGE_BASE_URL
+FINNHUB_TOKEN = CONFIG.FINNHUB_API_TOKEN
 
 
 #get all users from users table
@@ -813,3 +817,194 @@ def get_historical_cost_for_user():
         print(f"Error getting historical cost: {e}")
         return jsonify({"error": f"Failed to get historical cost: {e}"}), 500
 
+def get_user_stocks(user_id):
+    """Fetch up to 10 stocks from DB, fill with random if less than 10."""
+    conn = init_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    
+    cursor.execute("""
+        SELECT DISTINCT stock_id
+        FROM stocksportfolios
+        WHERE portfolios_id = %s
+        LIMIT 10
+    """, (user_id,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    stocks = [row[0] for row in rows]
+    
+    # Fill to 10 with random fallback symbols
+    while len(stocks) < 10:
+        extra = random.choice(RANDOM_STOCKS)
+        if extra not in stocks:
+            stocks.append(extra)
+    return stocks
+
+def get_finnhub_data(symbol):
+    """Fetch recommendation, price-target, and sentiment for a symbol using Finnhub."""
+    
+    # Analyst Recommendations
+    rec_url = f"https://finnhub.io/api/v1/stock/recommendation?symbol={symbol}&token={FINNHUB_TOKEN}"
+    rec_data = requests.get(rec_url).json()
+    recommendation = rec_data[0] if rec_data else {}
+
+    # Price Targets
+    target_url = f"https://finnhub.io/api/v1/stock/price-target?symbol={symbol}&token={FINNHUB_TOKEN}"
+    price_target = requests.get(target_url).json()
+
+    # News Sentiment
+    sentiment_url = f"https://finnhub.io/api/v1/news-sentiment?symbol={symbol}&token={FINNHUB_TOKEN}"
+    sentiment = requests.get(sentiment_url).json()
+
+    return {
+        "symbol": symbol,
+        "recommendations": {
+            "strongBuy": recommendation.get("strongBuy", 0),
+            "buy": recommendation.get("buy", 0),
+            "hold": recommendation.get("hold", 0),
+            "sell": recommendation.get("sell", 0),
+            "strongSell": recommendation.get("strongSell", 0)
+        },
+        "price_targets": {
+            "low": price_target.get("targetLow"),
+            "average": price_target.get("targetMean"),
+            "high": price_target.get("targetHigh")
+        },
+        "sentiment": {
+            "bullishPercent": sentiment.get("bullishPercent", 0),
+            "bearishPercent": sentiment.get("bearishPercent", 0),
+            "companyNewsScore": sentiment.get("companyNewsScore", 0)
+        }
+    }
+
+@portfolio_bp.route("/recommendationsandsentiment", methods=["GET"])
+def recommendations_and_sentiment():
+    """API endpoint to fetch portfolio stock recommendations, price targets, and sentiment."""
+    user_id = request.args.get("user_id", 1)
+    stocks = get_user_stocks(user_id)
+
+    results = [get_finnhub_data(symbol) for symbol in stocks]
+    return jsonify(results)
+
+
+def fetch_yahoo_news(symbols):
+    """Fetch news from Yahoo Finance RSS feed and extract images from article pages"""
+    base_url = "https://feeds.finance.yahoo.com/rss/2.0/headline"
+    url = f"{base_url}?s={symbols}&region=US&lang=en-US"
+    feed = feedparser.parse(url)
+    
+    def extract_image_from_page(article_url):
+        """Extract the main image from the news article page"""
+        try:
+            from bs4 import BeautifulSoup
+            import re
+            
+            # Set headers to mimic a real browser
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            
+            # Fetch the article page with timeout
+            response = requests.get(article_url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Try different methods to find the main image
+            image_url = None
+            
+            # Method 1: Look for Open Graph image
+            og_image = soup.find('meta', property='og:image')
+            if og_image and og_image.get('content'):
+                image_url = og_image['content']
+            
+            # Method 2: Look for Twitter card image
+            if not image_url:
+                twitter_image = soup.find('meta', attrs={'name': 'twitter:image'})
+                if twitter_image and twitter_image.get('content'):
+                    image_url = twitter_image['content']
+            
+            # Method 3: Look for article images (common patterns)
+            if not image_url:
+                # Look for images in article content
+                article_selectors = [
+                    'article img',
+                    '.article-content img',
+                    '.story-content img',
+                    '.post-content img',
+                    '.entry-content img',
+                    '[data-module="ArticleBody"] img',
+                    '.caas-body img'  # Yahoo Finance specific
+                ]
+                
+                for selector in article_selectors:
+                    img_tag = soup.select_one(selector)
+                    if img_tag and img_tag.get('src'):
+                        src = img_tag['src']
+                        # Skip small images, icons, and ads
+                        if not any(skip in src.lower() for skip in ['icon', 'logo', 'avatar', 'ad', 'banner']) and \
+                           not src.endswith('.svg'):
+                            image_url = src
+                            break
+            
+            # Method 4: Look for the first significant image in the page
+            if not image_url:
+                all_images = soup.find_all('img')
+                for img in all_images:
+                    src = img.get('src', '')
+                    if src and not any(skip in src.lower() for skip in ['icon', 'logo', 'avatar', 'ad', 'banner', 'pixel']) and \
+                       not src.endswith('.svg'):
+                        # Try to get image dimensions if available
+                        width = img.get('width')
+                        height = img.get('height')
+                        if width and height:
+                            try:
+                                w, h = int(width), int(height)
+                                if w >= 200 and h >= 150:  # Reasonable size for article image
+                                    image_url = src
+                                    break
+                            except ValueError:
+                                pass
+                        else:
+                            # If no dimensions, take the first reasonable image
+                            image_url = src
+                            break
+            
+            # Convert relative URLs to absolute URLs
+            if image_url and image_url.startswith('/'):
+                from urllib.parse import urljoin
+                image_url = urljoin(article_url, image_url)
+            
+            return image_url
+            
+        except Exception as e:
+            print(f"Error extracting image from {article_url}: {e}")
+            return None
+    
+    articles = []
+    for entry in feed.entries[:10]:
+        # Extract image from the actual article page
+        image_url = extract_image_from_page(entry.link)
+        
+        article = {
+            "title": entry.title,
+            "link": entry.link,
+            "published": entry.published,
+            "summary": entry.get("summary", ""),
+            "category": "Market News"
+        }
+        
+        # Only add image if one was found
+        if image_url:
+            article["image"] = image_url
+            
+        articles.append(article)
+    
+    return articles
+
+@portfolio_bp.route("/news")
+def get_news():
+    """Get financial news with images extracted from article pages"""
+    symbols = "^GSPC,BTC-USD,EURUSD=X"
+    return jsonify(fetch_yahoo_news(symbols))

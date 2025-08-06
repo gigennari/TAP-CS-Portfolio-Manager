@@ -5,7 +5,9 @@
 const CONFIG = {
     // Alpha Vantage API Configuration
     ALPHA_VANTAGE_API_KEY: 'YD0AVPAM5ADQLFPS',
-    ALPHA_VANTAGE_BASE_URL: 'https://www.alphavantage.co/query',
+    
+    // Other API tokens 
+    FINNHUB_API_TOKEN: 'd296b71r01qhoena6e2gd296b71r01qhoena6e30',
     
     // Backend API Configuration
     API_BASE: 'http://localhost:5000',
@@ -52,6 +54,9 @@ function validateConfig() {
     
     return warnings.length === 0;
 }
+
+// Global API base URL for easy access
+const API_BASE_URL = CONFIG.API_BASE;
 
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
