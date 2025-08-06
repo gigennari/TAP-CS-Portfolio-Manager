@@ -24,7 +24,8 @@ CREATE TABLE  portfolios (
     account_id INT,
 	FOREIGN KEY (account_id) REFERENCES accounts(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    active BOOLEAN DEFAULT TRUE
+    active BOOLEAN DEFAULT TRUE, 
+    asset_class VARCHAR(50) DEFAULT 'Equity'
 );
 
 CREATE TABLE stocks (
