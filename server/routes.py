@@ -975,25 +975,61 @@ def get_historical_balance_for_user():
 
 def get_company_logo(symbol, domain_fallback=None):
     """
-    Fetch company logo using Finnhub API.
-    Optionally fallback to Clearbit using the company's domain if Finnhub has no logo.
+    Fetch company logo using multiple sources with fallbacks.
     """
 
-    # 1. Try Finnhub logo
-    finnhub_url = f"https://finnhub.io/api/logo?symbol={symbol}&token={FINNHUB_TOKEN}"
+    # 1. Try Finnhub company profile (includes logo)
     try:
-        resp = requests.get(finnhub_url).json()
-        if resp and resp.get("url"):
-            return resp["url"]
+        print("Using finnhub")
+        finnhub_url = f"https://finnhub.io/api/v1/stock/profile2?symbol={symbol}&token={FINNHUB_TOKEN}"
+        resp = requests.get(finnhub_url, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data and data.get("logo") and data["logo"].strip():
+                return data["logo"]
     except Exception as e:
         print(f"Finnhub logo fetch error for {symbol}: {e}")
 
-    # 2. Optional fallback using Clearbit (requires domain)
-    if domain_fallback:
-        clearbit_url = f"https://logo.clearbit.com/{domain_fallback}"
-        return clearbit_url
+    # 2. Try Yahoo Finance logo (alternative approach)
+    try:
+        print("print yahoo finance")
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+        if info and info.get("logo_url"):
+            return info["logo_url"]
+    except Exception as e:
+        print(f"Yahoo Finance logo fetch error for {symbol}: {e}")
 
-    # 3. No logo found
+    # 3. Optional fallback using Clearbit (requires domain)
+    if domain_fallback:
+        try:
+            print("Using clearbit")
+            clearbit_url = f"https://logo.clearbit.com/{domain_fallback}"
+            # Test if the Clearbit logo exists
+            resp = requests.head(clearbit_url, timeout=3)
+            if resp.status_code == 200:
+                return clearbit_url
+        except Exception as e:
+            print(f"Clearbit logo fetch error for {symbol}: {e}")
+
+    # 4. Generic fallback logos based on common company patterns
+    common_logos = {
+        'AAPL': 'https://logo.clearbit.com/apple.com',
+        'GOOGL': 'https://logo.clearbit.com/google.com',
+        'GOOG': 'https://logo.clearbit.com/google.com',
+        'MSFT': 'https://logo.clearbit.com/microsoft.com',
+        'AMZN': 'https://logo.clearbit.com/amazon.com',
+        'TSLA': 'https://logo.clearbit.com/tesla.com',
+        'META': 'https://logo.clearbit.com/meta.com',
+        'NVDA': 'https://logo.clearbit.com/nvidia.com',
+        'NFLX': 'https://logo.clearbit.com/netflix.com',
+        'ADBE': 'https://logo.clearbit.com/adobe.com'
+    }
+    
+    if symbol in common_logos:
+        return common_logos[symbol]
+
+    # 5. No logo found
     return None
 
 @portfolio_bp.route("/recommendationsandsentiment", methods=["GET"])
@@ -1002,9 +1038,13 @@ def recommendations_and_sentiment():
     user_id = request.args.get("user_id", 1)
     stocks = get_user_stocks(user_id)
 
-    results = [get_finnhub_data(symbol) for symbol in stocks]
-    companies_logos = [get_company_logo(symbol) for symbol in stocks]  # Example for first symbol
-    return jsonify(results, companies_logos)
+    results = []
+    for symbol in stocks:
+        stock_data = get_finnhub_data(symbol)
+        stock_data['logo'] = get_company_logo(symbol)
+        results.append(stock_data)
+    
+    return jsonify(results)
 
 
 def fetch_yahoo_news(symbols):
