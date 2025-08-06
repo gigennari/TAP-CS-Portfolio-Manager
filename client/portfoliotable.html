@@ -23,9 +23,9 @@
                     <a href="portfoliotable.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium">
                         Portfolio
                     </a>
-                    <a href="homebroker.html" class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium">
+                    <button onclick="openHomeBrokerPage()" class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium">
                         Homebroker
-                    </a>
+                    </button>
                     <a href="news.html" class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium">
                         News
                     </a>
@@ -83,8 +83,8 @@
                         <p class="text-3xl font-bold text-slate-900" id="accountBalance">$0.00</p>
                         <p class="text-slate-500 text-sm font-medium mt-1">Available Cash</p>
                     </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                         </svg>
                     </div>
@@ -95,7 +95,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-slate-500 text-sm font-medium">Total Portfolio Value</p>
-                        <p class="text-3xl font-bold text-slate-900" id="totalValue">$1,234,567.89</p>
+                        <p class="text-3xl font-bold text-slate-900" id="totalValue">$0</p>
                         <p class="text-slate-500 text-sm font-medium mt-1">Invested Assets</p>
                     </div>
                     <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -110,8 +110,8 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-slate-500 text-sm font-medium">24h Change</p>
-                        <p class="text-3xl font-bold text-emerald-600" id="change24h">+$28,945.12</p>
-                        <p class="text-emerald-500 text-sm font-medium mt-1" id="changeRate24h">+2.34%</p>
+                        <p class="text-3xl font-bold text-emerald-600" id="change24h">+$0</p>
+                        <p class="text-emerald-500 text-sm font-medium mt-1" id="changeRate24h">+0%</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +125,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-slate-500 text-sm font-medium">Total Assets</p>
-                        <p class="text-3xl font-bold text-slate-900">5</p>
+                        <p class="text-3xl font-bold text-slate-900">0</p>
                         <p class="text-slate-500 text-sm font-medium mt-1">Holdings</p>
                     </div>
                     <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -142,7 +142,7 @@
             <!-- Portfolio Value Trend Chart -->
             <div class="bg-white rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-slate-900">Portfolio Performance & Profit Analysis</h3>
+                    <h3 class="text-xl font-semibold text-slate-900">Portfolio Performance</h3>
                     <div class="flex space-x-2">
                         <button class="portfolio-period-btn px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg font-medium" data-period="7">7D</button>
                         <button class="portfolio-period-btn px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 rounded-lg" data-period="30">30D</button>
@@ -262,9 +262,9 @@
             <header class="px-6 py-4 border-b border-slate-200">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-slate-900">My Wallet</h2>
-                    <a href="homebroker.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium inline-block text-center">
+                    <button onclick="openAddAssetPage()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
                         Add Asset
-                    </a>
+                    </button>
                 </div>
             </header>
             <div class="p-6">
@@ -551,15 +551,95 @@
     </div>
 </div>
 
+        <!-- Transaction History Table -->
+        <div class="bg-white shadow-xl rounded-2xl mt-8">
+            <header class="px-6 py-4 border-b border-slate-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-slate-900">Transaction History</h2>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                        <span class="text-sm text-slate-600">Recent Trades</span>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                <!-- Transaction Table -->
+                <div class="overflow-x-auto">
+                    <table class="table-auto w-full" id="transactionsTable">
+                        <!-- Table header -->
+                        <thead class="text-[13px] text-slate-500/70">
+                            <tr>
+                                <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r">
+                                    <div class="font-medium text-left">Date</div>
+                                </th>
+                                <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r">
+                                    <div class="font-medium text-left">Type</div>
+                                </th>
+                                <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r">
+                                    <div class="font-medium text-left">Symbol</div>
+                                </th>
+                                <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r">
+                                    <div class="font-medium text-left">Company</div>
+                                </th>
+                                <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r">
+                                    <div class="font-medium text-right">Quantity</div>
+                                </th>
+                                <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r">
+                                    <div class="font-medium text-right">Price</div>
+                                </th>
+                                <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r">
+                                    <div class="font-medium text-right">Total Value</div>
+                                </th>
+                                <th class="px-5 py-2 first:pl-3 last:pr-3 bg-slate-100 first:rounded-l last:rounded-r">
+                                    <div class="font-medium text-left">Sector</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTableBody">
+                            <!-- Transaction rows will be populated dynamically -->
+                            <tr>
+                                <td colspan="8" class="px-5 py-8 text-center text-slate-500">
+                                    <div class="flex items-center justify-center space-x-2">
+                                        <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Loading transactions...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div class="flex items-center justify-between mt-4 px-2" id="transactionsPagination" style="display: none;">
+                    <div class="text-sm text-slate-600">
+                        Showing <span id="transactionsShowingStart">1</span> to <span id="transactionsShowingEnd">5</span> of <span id="transactionsTotalCount">0</span> transactions
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="transactionsPrevBtn" onclick="changeTransactionsPage(-1)" 
+                                class="px-3 py-1 text-sm bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                            Previous
+                        </button>
+                        <span class="text-sm text-slate-600">
+                            Page <span id="transactionsCurrentPage">1</span> of <span id="transactionsTotalPages">1</span>
+                        </span>
+                        <button id="transactionsNextBtn" onclick="changeTransactionsPage(1)" 
+                                class="px-3 py-1 text-sm bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Sector Allocation Pie Chart -->
         <div class="bg-white shadow-xl rounded-2xl mt-8">
             <header class="px-6 py-4 border-b border-slate-200">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-slate-900">Sector Allocation</h2>
-                    <div class="flex items-center space-x-2">
+                    <!-- <div class="flex items-center space-x-2">
                         <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
                         <span class="text-sm text-slate-600">Portfolio Distribution</span>
-                    </div>
+                    </div> -->
                 </div>
             </header>
             <div class="p-6">
@@ -577,6 +657,11 @@
         // Global variables
         let currentUserId = null;
         let currentUser = null;
+        
+        // Transaction pagination variables
+        let allTransactions = [];
+        let currentTransactionPage = 1;
+        const transactionsPerPage = 5;
         const API_BASE = 'http://localhost:5000';
 
         // User Management Functions
@@ -630,10 +715,23 @@
 
             usersList.innerHTML = usersHTML;
             
-            // Auto-select user with ID = 1 if available
-            const defaultUser = users.find(user => user.id == 1);
-            if (defaultUser) {
-                selectUser(defaultUser.id, defaultUser.username, defaultUser.name, defaultUser.email, defaultUser.account_id);
+            // Try to restore previously selected user from localStorage
+            const savedUserId = localStorage.getItem('selectedUserId');
+            let userToSelect = null;
+            
+            if (savedUserId) {
+                // Try to find the previously selected user
+                userToSelect = users.find(user => user.id == savedUserId);
+            }
+            
+            // If no saved user or saved user not found, fall back to user with ID = 1
+            if (!userToSelect) {
+                userToSelect = users.find(user => user.id == 1);
+            }
+            
+            // Select the determined user
+            if (userToSelect) {
+                selectUser(userToSelect.id, userToSelect.username, userToSelect.name, userToSelect.email, userToSelect.account_id);
             }
         }
 
@@ -647,6 +745,9 @@
                 account_id: account_id
             };
 
+            // Save selected user ID to localStorage for persistence across page refreshes
+            localStorage.setItem('selectedUserId', id);
+
             // Update UI
             const displayName = name;
             document.getElementById('selectedUserName').textContent = displayName;
@@ -655,10 +756,24 @@
             // Close dropdown
             document.getElementById('userDropdownMenu').classList.add('hidden');
 
+            // Reset cumulative return calculator to empty state
+            resetCumulativeReturnCalculator();
+            
+            // Reset 24h change block to default values
+            reset24hChangeBlock();
+            
+            // Reset portfolio summary cards
+            resetPortfolioSummary();
+
             // Load user's portfolio data
             loadUserPortfolio(id);
             
             console.log('Selected user:', currentUser);
+        }
+
+        function clearSavedUser() {
+            // Clear saved user from localStorage (useful for cleanup)
+            localStorage.removeItem('selectedUserId');
         }
 
        async function loadUserPortfolio(user_id) {
@@ -673,7 +788,7 @@
                     `$${walletData.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
                 const totalAssetsElement = document.querySelector('.grid .bg-white:nth-child(4) .text-3xl');
-                if (totalAssetsElement) totalAssetsElement.textContent = walletData.count;
+                if (totalAssetsElement) totalAssetsElement.textContent = walletData.count || 0;
 
                 populateWalletTable(walletData.wallet);
                 updatePortfolioSummary(walletData.wallet, walletData.totalValue);
@@ -684,11 +799,31 @@
                 
                 // Load portfolio trend chart
                 loadPortfolioTrend(user_id, currentPortfolioPeriod);
+                
+                // Load transaction history
+                loadUserTransactions(user_id);
                 } else {
                 console.error('No wallet data received');
+                
+                // Set total assets to 0 when no wallet data
+                const totalAssetsElement = document.querySelector('.grid .bg-white:nth-child(4) .text-3xl');
+                if (totalAssetsElement) totalAssetsElement.textContent = '0';
+                
+                // Set total value to $0.00 when no wallet data
+                document.getElementById('totalValue').textContent = '$0.00';
+                
+                // Reset 24h change to $0.00 (0.00%) when no wallet data
+                document.getElementById('change24h').textContent = '$0.00';
+                document.getElementById('change24h').className = 'text-3xl font-bold text-slate-400';
+                document.getElementById('changeRate24h').textContent = '0.00%';
+                document.getElementById('changeRate24h').className = 'text-slate-400 text-sm font-medium mt-1';
+                
                 populateWalletTable([]);
                 updateSectorChart([]); // Show empty state
                 showPortfolioChartState('empty'); // Show empty portfolio chart
+                
+                // Load transaction history even if no wallet data
+                loadUserTransactions(user_id);
                 }
 
                 const balanceResponse = await fetch(`${API_BASE}/balance?user_id=${user_id}`);
@@ -706,6 +841,71 @@
                 showPortfolioLoading(false);
             }
             }
+
+        // Load portfolio data without transaction history (for periodic refreshes)
+        async function loadUserPortfolioOnly(user_id) {
+            try {
+                showPortfolioLoading(true);
+
+                const walletResponse = await fetch(`${API_BASE}/wallet?user_id=${user_id}`);
+                const walletData = await walletResponse.json();
+
+                if (walletData.wallet) {
+                document.getElementById('totalValue').textContent = 
+                    `$${walletData.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                const totalAssetsElement = document.querySelector('.grid .bg-white:nth-child(4) .text-3xl');
+                if (totalAssetsElement) totalAssetsElement.textContent = walletData.count || 0;
+
+                populateWalletTable(walletData.wallet);
+                updatePortfolioSummary(walletData.wallet, walletData.totalValue);
+                
+                // Update sector allocation chart
+                const sectorData = calculateSectorAllocations(walletData.wallet, walletData.totalValue);
+                updateSectorChart(sectorData);
+                
+                // Load portfolio trend chart
+                loadPortfolioTrend(user_id, currentPortfolioPeriod);
+                
+                // NOTE: Transaction history is NOT loaded here (only on user change)
+                } else {
+                console.error('No wallet data received');
+                
+                // Set total assets to 0 when no wallet data
+                const totalAssetsElement = document.querySelector('.grid .bg-white:nth-child(4) .text-3xl');
+                if (totalAssetsElement) totalAssetsElement.textContent = '0';
+                
+                // Set total value to $0.00 when no wallet data
+                document.getElementById('totalValue').textContent = '$0.00';
+                
+                // Reset 24h change to $0.00 (0.00%) when no wallet data
+                document.getElementById('change24h').textContent = '$0.00';
+                document.getElementById('change24h').className = 'text-3xl font-bold text-slate-400';
+                document.getElementById('changeRate24h').textContent = '0.00%';
+                document.getElementById('changeRate24h').className = 'text-slate-400 text-sm font-medium mt-1';
+                
+                populateWalletTable([]);
+                updateSectorChart([]); // Show empty state
+                showPortfolioChartState('empty'); // Show empty portfolio chart
+                
+                // NOTE: Transaction history is NOT loaded here (only on user change)
+                }
+
+                const balanceResponse = await fetch(`${API_BASE}/balance?user_id=${user_id}`);
+                const balanceData = await balanceResponse.json();
+                if (balanceData.balance !== undefined) {
+                console.log('User cash balance:', balanceData.balance);
+                document.getElementById('accountBalance').textContent = 
+                    `$${parseFloat(balanceData.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                }
+
+            } catch (error) {
+                console.error('Error loading user portfolio:', error);
+                showPortfolioError('Failed to load portfolio data');
+            } finally {
+                showPortfolioLoading(false);
+            }
+        }
 
         function populateWalletTable(walletData) {
             const tableBody = document.querySelector('tbody');
@@ -802,8 +1002,8 @@
             const changePercent = totalPreviousValue > 0 ? (totalChange24h / totalPreviousValue * 100) : 0;
             
             // Update 24h change card
-            const changeValueElement = document.querySelector('.grid .bg-white:nth-child(3) .text-3xl');
-            const changePercentElement = document.querySelector('.grid .bg-white:nth-child(3) .text-emerald-500');
+            const changeValueElement = document.getElementById('change24h');
+            const changePercentElement = document.getElementById('changeRate24h');
             
             if (changeValueElement) {
                 const changeClass = totalChange24h >= 0 ? 'text-emerald-600' : 'text-red-600';
@@ -865,6 +1065,30 @@
             window.location.href = url;
         }
 
+        function openAddAssetPage() {
+            // Redirect to homebroker with current user for adding new assets
+            let url = `homebroker.html`;
+            
+            // Add current user ID if available
+            if (currentUserId) {
+                url += `?user_id=${currentUserId}`;
+            }
+            
+            window.location.href = url;
+        }
+
+        function openHomeBrokerPage() {
+            // Redirect to homebroker with current user
+            let url = `homebroker.html`;
+            
+            // Add current user ID if available
+            if (currentUserId) {
+                url += `?user_id=${currentUserId}`;
+            }
+            
+            window.location.href = url;
+        }
+
         function showUserError(message) {
             const usersList = document.getElementById('usersList');
             usersList.innerHTML = `
@@ -875,6 +1099,186 @@
                     <span class="text-sm">${message}</span>
                 </div>
             `;
+        }
+
+        // Transaction History Functions
+        async function loadUserTransactions(user_id) {
+            try {
+                showTransactionsLoading(true);
+                
+                const response = await fetch(`${API_BASE}/transactions?user_id=${user_id}`);
+                const transactions = await response.json();
+                
+                if (Array.isArray(transactions)) {
+                    allTransactions = transactions;
+                    currentTransactionPage = 1; // Reset to first page
+                    displayTransactionsPage();
+                } else {
+                    console.error('Invalid transactions data received:', transactions);
+                    showTransactionsError('Failed to load transaction data');
+                }
+                
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                showTransactionsError('Failed to load transactions');
+            }
+        }
+
+        function displayTransactionsPage() {
+            const tableBody = document.getElementById('transactionsTableBody');
+            const paginationDiv = document.getElementById('transactionsPagination');
+            
+            if (!allTransactions || allTransactions.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-5 py-8 text-center text-slate-500">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                <p class="text-lg font-medium">No transactions found</p>
+                                <p class="text-sm text-slate-400 mt-1">Start trading to see your transaction history</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                paginationDiv.style.display = 'none';
+                return;
+            }
+
+            // Calculate pagination
+            const totalTransactions = allTransactions.length;
+            const totalPages = Math.ceil(totalTransactions / transactionsPerPage);
+            const startIndex = (currentTransactionPage - 1) * transactionsPerPage;
+            const endIndex = Math.min(startIndex + transactionsPerPage, totalTransactions);
+            const pageTransactions = allTransactions.slice(startIndex, endIndex);
+
+            // Generate table HTML for current page
+            const tableHTML = pageTransactions.map(transaction => {
+                const date = new Date(transaction.transaction_date);
+                const formattedDate = date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+                const formattedTime = date.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                const quantity = parseFloat(transaction.quantity);
+                const price = parseFloat(transaction.price);
+                const totalValue = quantity * price;
+                
+                const typeClass = transaction.transaction_type.toLowerCase() === 'buy' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800';
+                
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="text-sm font-medium text-slate-900">${formattedDate}</div>
+                            <div class="text-xs text-slate-500">${formattedTime}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${typeClass}">
+                                ${transaction.transaction_type.toUpperCase()}
+                            </span>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="text-sm font-medium text-slate-900">${transaction.symbol}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="text-sm text-slate-900">${transaction.company_name || transaction.symbol}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200 text-right">
+                            <div class="text-sm font-medium text-slate-900">${quantity.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200 text-right">
+                            <div class="text-sm font-medium text-slate-900">$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200 text-right">
+                            <div class="text-sm font-medium text-slate-900">$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </td>
+                        <td class="px-5 py-3 border-b border-slate-200">
+                            <div class="text-sm text-slate-600">${transaction.sector || 'Unknown'}</div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tableBody.innerHTML = tableHTML;
+
+            // Update pagination info
+            updateTransactionsPagination(startIndex + 1, endIndex, totalTransactions, currentTransactionPage, totalPages);
+            
+            // Show pagination if there are multiple pages
+            paginationDiv.style.display = totalPages > 1 ? 'flex' : 'none';
+        }
+
+        function updateTransactionsPagination(showingStart, showingEnd, totalCount, currentPage, totalPages) {
+            document.getElementById('transactionsShowingStart').textContent = showingStart;
+            document.getElementById('transactionsShowingEnd').textContent = showingEnd;
+            document.getElementById('transactionsTotalCount').textContent = totalCount;
+            document.getElementById('transactionsCurrentPage').textContent = currentPage;
+            document.getElementById('transactionsTotalPages').textContent = totalPages;
+            
+            // Update button states
+            const prevBtn = document.getElementById('transactionsPrevBtn');
+            const nextBtn = document.getElementById('transactionsNextBtn');
+            
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+        }
+
+        function changeTransactionsPage(direction) {
+            const totalPages = Math.ceil(allTransactions.length / transactionsPerPage);
+            const newPage = currentTransactionPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentTransactionPage = newPage;
+                displayTransactionsPage();
+            }
+        }
+
+        function showTransactionsLoading(show) {
+            const tableBody = document.getElementById('transactionsTableBody');
+            if (show) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-5 py-8 text-center text-slate-500">
+                            <div class="flex items-center justify-center space-x-2">
+                                <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                <span>Loading transactions...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function showTransactionsError(message) {
+            const tableBody = document.getElementById('transactionsTableBody');
+            const paginationDiv = document.getElementById('transactionsPagination');
+            
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-5 py-8 text-center text-red-500">
+                        <div class="flex flex-col items-center">
+                            <svg class="w-12 h-12 text-red-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-lg font-medium">${message}</p>
+                            <button onclick="loadUserTransactions(currentUserId)" class="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                                Retry
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            // Hide pagination on error
+            paginationDiv.style.display = 'none';
         }
 
         // Sector Allocation Functions
@@ -1075,11 +1479,14 @@
             // Initialize portfolio chart with empty state
             showPortfolioChartState('empty');
             
-            // Auto-refresh portfolio data every 30 seconds
+            // Initialize cumulative return calculator with empty state
+            showReturnCalculatorState('empty');
+            
+            // Auto-refresh portfolio data every 60 seconds (excluding transaction history)
             setInterval(function() {
                 if (currentUserId) {
                     console.log('Auto-refreshing portfolio data...');
-                    loadUserPortfolio(currentUserId);
+                    loadUserPortfolioOnly(currentUserId); // Load portfolio data without transactions
                 }
             }, 60000); // 60 seconds
         });
@@ -1100,8 +1507,8 @@
                 
                 // Fetch both portfolio value and cost data
                 const [valueResponse, costResponse] = await Promise.all([
-                    fetch(`${API_BASE}/historical-data?user_id=${userId}&days=${days}`),
-                    fetch(`${API_BASE}/historical-cost?user_id=${userId}&days=${days}`)
+                    fetch(`${API_BASE}/historical-data?user_id=${userId}`),
+                    fetch(`${API_BASE}/historical-cost?user_id=${userId}`)
                 ]);
                 
                 const valueData = await valueResponse.json();
@@ -1525,6 +1932,48 @@
             }
         }
 
+        function resetCumulativeReturnCalculator() {
+            // Hide results and show empty state
+            showReturnCalculatorState('empty');
+            
+            // Reset the form values to default (last 30 days)
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            
+            // Clear any previous results
+            document.getElementById('cumulativeReturn').textContent = '0.00%';
+            document.getElementById('cumulativeReturn').className = 'text-4xl font-bold mb-4 text-slate-900';
+        }
+
+        function reset24hChangeBlock() {
+            // Reset 24h change block to default values while new data loads
+            const changeValueElement = document.getElementById('change24h');
+            const changePercentElement = document.getElementById('changeRate24h');
+            
+            if (changeValueElement) {
+                changeValueElement.className = 'text-3xl font-bold text-slate-400';
+                changeValueElement.textContent = '$0.00';
+            }
+            
+            if (changePercentElement) {
+                changePercentElement.className = 'text-slate-400 text-sm font-medium mt-1';
+                changePercentElement.textContent = '0.00%';
+            }
+        }
+
+        function resetPortfolioSummary() {
+            // Reset all portfolio summary cards to default values while new data loads
+            document.getElementById('accountBalance').textContent = '$0.00';
+            document.getElementById('totalValue').textContent = '$0.00';
+            
+            const totalAssetsElement = document.querySelector('.grid .bg-white:nth-child(4) .text-3xl');
+            if (totalAssetsElement) totalAssetsElement.textContent = '0';
+        }
+
         // Add some interactivity to the table rows
         document.addEventListener('DOMContentLoaded', function() {
             const tableRows = document.querySelectorAll('tbody tr');
@@ -1537,18 +1986,24 @@
                 });
             });
 
-            // Simulate real-time price updates
+            // Simulate real-time price updates (only for portfolio table, not transaction table)
             function updatePrices() {
-                const priceElements = document.querySelectorAll('tbody tr td:nth-child(5) div');
-                priceElements.forEach(element => {
-                    const currentPrice = parseFloat(element.textContent.replace('$', '').replace(',', ''));
-                    const change = (Math.random() - 0.5) * 0.02; // ±1% change
-                    const newPrice = currentPrice * (1 + change);
-                    element.textContent = '$' + newPrice.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
+                // Only target the portfolio/wallet table, not the transaction table
+                const portfolioTable = document.querySelector('table:not(#transactionsTable)');
+                if (portfolioTable) {
+                    const priceElements = portfolioTable.querySelectorAll('tbody tr td:nth-child(5) div');
+                    priceElements.forEach(element => {
+                        const currentPrice = parseFloat(element.textContent.replace('$', '').replace(',', ''));
+                        if (!isNaN(currentPrice) && currentPrice > 0) {
+                            const change = (Math.random() - 0.5) * 0.02; // ±1% change
+                            const newPrice = currentPrice * (1 + change);
+                            element.textContent = '$' + newPrice.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
                     });
-                });
+                }
             }
 
             // Update prices every 30 seconds
