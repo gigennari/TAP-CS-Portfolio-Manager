@@ -23,7 +23,7 @@ Run this command on bash:
 ```
 
 # Our Database Structure
-![database structure]()
+![database structure](screenshots/schema.png)
 
 
 
@@ -65,7 +65,7 @@ The Portfolio Dashboard is divided into several sections:
 
 ### 🔍 Stock Search
 
-![Stock Search](screenshots/homebroker-search.png)
+![Stock Search](screenshots/homebroker-search.jpeg)
 
 The **search functionality** enables users to find stocks and funds by ticker symbol or company name.
 
@@ -81,6 +81,9 @@ Example: Searching for `dis` shows options like:
 - `DIS.LON` — Distil Plc (Equity, UK)
 - `DISAX` — BNY Mellon International Stock Fund (Mutual Fund, US)
 
+### 🛒 Trading Stocks
+
+![Home Broker](screenshots/homebroker-stock.png)
 
 After selecting a stock, the page shows detailed information:
 
@@ -118,7 +121,7 @@ Example for Disney (DIS):
 
 ---
 
-### 🛒 Trading Stocks
+
 
 At the bottom right, the **Trade Stock** panel allows placing buy or sell orders.
 
@@ -133,7 +136,7 @@ At the bottom right, the **Trade Stock** panel allows placing buy or sell orders
   - **Place Order** button finalizes the trade
   -If you don't have sufficient funds, an error message appears
 
-  
+
 
 #### **Sell Mode**
 
