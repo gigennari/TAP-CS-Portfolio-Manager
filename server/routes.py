@@ -656,6 +656,11 @@ def get_stock_history(symbol):
         return jsonify({"error": f"Failed to get stock history for {symbol}"}), 500
     
     
+from flask import Blueprint, request, jsonify
+import pandas as pd
+import yfinance as yf
+from datetime import datetime, timedelta
+
 @portfolio_bp.route('/historical-data', methods=['GET'])
 def get_historical_data_for_user():
     try:
@@ -666,7 +671,6 @@ def get_historical_data_for_user():
         if not user_id:
             return jsonify({"error": "user_id is required"}), 400
 
-        # Fetch user's stock transactions
         query = """
             SELECT s.symbol, t.transaction_type, t.quantity, t.transaction_date
             FROM stockstransactions t
@@ -692,26 +696,24 @@ def get_historical_data_for_user():
         df['date'] = df['transaction_date'].dt.date
         df['signed_qty'] = df.apply(lambda x: x['quantity'] if x['transaction_type'] == 'buy' else -x['quantity'], axis=1)
 
-        # Aggregate daily position per symbol
         daily_positions = (
             df.groupby(['date', 'symbol'])['signed_qty'].sum()
             .groupby(level=1).cumsum().reset_index()
         )
         daily_positions.rename(columns={'signed_qty': 'shares'}, inplace=True)
 
-        # Date range
         start_date = datetime.today().date() - timedelta(days=365)
         end_date = datetime.today().date()
         date_range = pd.date_range(start=start_date, end=end_date)
         portfolio_values = pd.DataFrame(index=date_range)
 
-        # print("portfolio_values:", portfolio_values)
-        # print("daily positions:", daily_positions)
-        # Loop through each symbol
+        today = datetime.today().date()
+        today_index = portfolio_values.index[-1]
+        today_values = {}
+
         for symbol in daily_positions['symbol'].unique():
             hist = yf.download(symbol, start=start_date, end=end_date, auto_adjust=True)['Close']
             hist.index = hist.index.date
-            # print("hist:", hist)
 
             symbol_positions = (
                 daily_positions[daily_positions['symbol'] == symbol]
@@ -719,25 +721,24 @@ def get_historical_data_for_user():
                 .reindex(date_range.date, method='ffill')
                 .fillna(0)
             )
-            
-            # print("symbol_positions:", symbol_positions)
-            
             shares = symbol_positions['shares'].reindex(date_range.date, fill_value=0).ffill()
-            # print("shares:",shares)
-            # print(type(shares))
+
             prices = hist.reindex(date_range.date).ffill()
-            # print("prices:",prices)
-            # print(type(prices))
-            # print(type(portfolio_values))
-            
-            df_test = shares * prices[symbol]
-            # print("df_test:", df_test)
-            # print(type(df_test))
-
             portfolio_values[symbol] = shares * prices[symbol]
-            # print(portfolio_values[symbol])
-
-        # print("portfolio_values:", portfolio_values)
+            print(portfolio_values)
+            # 🔥 Patch today's value with current price
+            try:
+                current_price = yf.Ticker(symbol).fast_info['last_price']
+                today_shares = shares.loc[today]
+                today_values[symbol] = today_shares * current_price
+            except Exception as e:
+                print(f"Warning: Could not fetch current price for {symbol}: {e}")
+                today_values[symbol] = portfolio_values.at[today, symbol]
+            print(portfolio_values)
+        # Apply today's updated values
+        for symbol in today_values:
+            portfolio_values.loc[today_index, symbol] = today_values[symbol]
+        
         portfolio_values['total_value'] = portfolio_values.sum(axis=1)
         result = (
             portfolio_values['total_value']
@@ -751,6 +752,7 @@ def get_historical_data_for_user():
     except Exception as e:
         print(f"Error getting historical data: {e}")
         return jsonify({"error": f"Failed to get historical data: {e}"}), 500
+
 
         
 @portfolio_bp.route('/historical-cost', methods=['GET'])
@@ -975,6 +977,8 @@ def get_historical_balance_for_user():
 
         # Add current balance to get historical balances
         balance_series = current_balance + balance_series
+        
+        balance_series[-1] = current_balance
 
         result = [{'date': str(date), 'balance': round(balance, 2)} for date, balance in balance_series.items()]
         return jsonify(result)
@@ -1260,7 +1264,47 @@ def get_news():
     symbols = "^GSPC,BTC-USD,EURUSD=X"
     return jsonify(fetch_yahoo_news(symbols))
 
+@portfolio_bp.route('/transactions', methods=['GET'])
+def get_user_transactions():
+    try:
+        user_id = request.args.get('user_id')
 
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                st.id AS transaction_id,
+                st.transaction_type,
+                st.quantity,
+                st.price,
+                st.transaction_date,
+                s.symbol,
+                s.company_name,
+                s.sector,
+                s.industry
+            FROM stockstransactions st
+            JOIN stocksportfolios sp ON st.stocksportfolios_id = sp.id
+            JOIN stocks s ON sp.stock_id = s.id
+            JOIN portfolios p ON sp.portfolios_id = p.id
+            JOIN accounts a ON p.account_id = a.id
+            WHERE a.user_id = %s
+            ORDER BY st.transaction_date DESC
+        """
+        cursor.execute(query, (user_id,))
+        transactions = cursor.fetchall()
+
+        return jsonify(transactions)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
 @portfolio_bp.route("/marketsindices")
 def get_market_indices():
     """Get market indices data from Yahoo Finance"""

@@ -1,3 +1,18 @@
+USE bygdb;
+
+-- Disable foreign key checks
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Truncate in reverse dependency order
+TRUNCATE TABLE stockstransactions;
+TRUNCATE TABLE stocksportfolios;
+TRUNCATE TABLE portfolios;
+TRUNCATE TABLE accounts;
+TRUNCATE TABLE stocks;
+TRUNCATE TABLE users;
+
+-- Re-enable foreign key checks
+SET FOREIGN_KEY_CHECKS = 1;
 
 
 -- 1. Create users
