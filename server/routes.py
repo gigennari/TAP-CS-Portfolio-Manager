@@ -972,6 +972,30 @@ def get_historical_balance_for_user():
         return jsonify({"error": f"Failed to get historical balance: {e}"}), 500
 
 
+
+def get_company_logo(symbol, domain_fallback=None):
+    """
+    Fetch company logo using Finnhub API.
+    Optionally fallback to Clearbit using the company's domain if Finnhub has no logo.
+    """
+
+    # 1. Try Finnhub logo
+    finnhub_url = f"https://finnhub.io/api/logo?symbol={symbol}&token={FINNHUB_TOKEN}"
+    try:
+        resp = requests.get(finnhub_url).json()
+        if resp and resp.get("url"):
+            return resp["url"]
+    except Exception as e:
+        print(f"Finnhub logo fetch error for {symbol}: {e}")
+
+    # 2. Optional fallback using Clearbit (requires domain)
+    if domain_fallback:
+        clearbit_url = f"https://logo.clearbit.com/{domain_fallback}"
+        return clearbit_url
+
+    # 3. No logo found
+    return None
+
 @portfolio_bp.route("/recommendationsandsentiment", methods=["GET"])
 def recommendations_and_sentiment():
     """API endpoint to fetch portfolio stock recommendations, price targets, and sentiment."""
@@ -979,7 +1003,8 @@ def recommendations_and_sentiment():
     stocks = get_user_stocks(user_id)
 
     results = [get_finnhub_data(symbol) for symbol in stocks]
-    return jsonify(results)
+    companies_logos = [get_company_logo(symbol) for symbol in stocks]  # Example for first symbol
+    return jsonify(results, companies_logos)
 
 
 def fetch_yahoo_news(symbols):
