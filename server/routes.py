@@ -824,16 +824,17 @@ def get_user_stocks(user_id):
     
     
     cursor.execute("""
-        SELECT DISTINCT stock_id
+        SELECT DISTINCT stock_id, stocks.symbol AS symbol
         FROM stocksportfolios
+        JOIN stocks ON stocksportfolios.stock_id = stocks.id
         WHERE portfolios_id = %s
         LIMIT 10
     """, (user_id,))
     rows = cursor.fetchall()
     conn.close()
 
-    stocks = [row[0] for row in rows]
-    
+    stocks = [row['symbol'] for row in rows]
+    print(stocks)
     # Fill to 10 with random fallback symbols
     while len(stocks) < 10:
         extra = random.choice(RANDOM_STOCKS)
@@ -843,6 +844,15 @@ def get_user_stocks(user_id):
 
 def get_finnhub_data(symbol):
     """Fetch recommendation, price-target, and sentiment for a symbol using Finnhub."""
+    
+    # Get company name using Yahoo Finance (same as get_stock_info)
+    try:
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+        company_name = info.get('longName', info.get('shortName', symbol))
+    except Exception as e:
+        print(f"Error getting company name for {symbol}: {e}")
+        company_name = symbol
     
     # Analyst Recommendations
     rec_url = f"https://finnhub.io/api/v1/stock/recommendation?symbol={symbol}&token={FINNHUB_TOKEN}"
@@ -859,6 +869,7 @@ def get_finnhub_data(symbol):
 
     return {
         "symbol": symbol,
+        "company_name": company_name,
         "recommendations": {
             "strongBuy": recommendation.get("strongBuy", 0),
             "buy": recommendation.get("buy", 0),
