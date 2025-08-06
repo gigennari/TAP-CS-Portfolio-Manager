@@ -180,7 +180,8 @@ def get_wallet():
                     "marketCap": info.get("market_cap", 0),
                     "volume": info.get("volume", 0),
                     "sector": sector,
-                    "industry": industry
+                    "industry": industry,
+                    "logo": get_company_logo(symbol)
                 }
 
             except Exception as stock_error:
@@ -201,7 +202,8 @@ def get_wallet():
                     "marketCap": 0,
                     "volume": 0,
                     "sector": "Unknown",
-                    "industry": "Unknown"
+                    "industry": "Unknown",
+                    "logo": get_company_logo(symbol)
                 }
 
             wallet_data.append(wallet_item)
@@ -845,7 +847,7 @@ def get_user_stocks(user_id):
     return stocks
 
 def get_finnhub_data(symbol):
-    """Fetch recommendation, price-target, and sentiment for a symbol using Finnhub."""
+    """Fetch recommendation, price-target, sentiment, company news, and news sentiment for a symbol using Finnhub."""
     
     # Get company name using Yahoo Finance (same as get_stock_info)
     try:
@@ -868,6 +870,17 @@ def get_finnhub_data(symbol):
     # News Sentiment
     sentiment_url = f"https://finnhub.io/api/v1/news-sentiment?symbol={symbol}&token={FINNHUB_TOKEN}"
     sentiment = requests.get(sentiment_url).json()
+    
+    # Company News (last 7 days)
+    from datetime import datetime, timedelta
+    to_date = datetime.now()
+    from_date = to_date - timedelta(days=7)
+    
+    company_news_url = f"https://finnhub.io/api/v1/company-news?symbol={symbol}&from={from_date.strftime('%Y-%m-%d')}&to={to_date.strftime('%Y-%m-%d')}&token={FINNHUB_TOKEN}"
+    company_news = requests.get(company_news_url).json()
+    
+    # Limit to top 5 news articles
+    company_news = company_news[:5] if company_news else []
 
     return {
         "symbol": symbol,
@@ -888,7 +901,9 @@ def get_finnhub_data(symbol):
             "bullishPercent": sentiment.get("bullishPercent", 0),
             "bearishPercent": sentiment.get("bearishPercent", 0),
             "companyNewsScore": sentiment.get("companyNewsScore", 0)
-        }
+        },
+        "company_news": company_news,
+        "news_sentiment": sentiment
     }
     
 @portfolio_bp.route('/historical-balance', methods=['GET'])
@@ -1056,25 +1071,61 @@ def get_historical_balance_for_user():
 
 def get_company_logo(symbol, domain_fallback=None):
     """
-    Fetch company logo using Finnhub API.
-    Optionally fallback to Clearbit using the company's domain if Finnhub has no logo.
+    Fetch company logo using multiple sources with fallbacks.
     """
 
-    # 1. Try Finnhub logo
-    finnhub_url = f"https://finnhub.io/api/logo?symbol={symbol}&token={FINNHUB_TOKEN}"
+    # 1. Try Finnhub company profile (includes logo)
     try:
-        resp = requests.get(finnhub_url).json()
-        if resp and resp.get("url"):
-            return resp["url"]
+        print("Using finnhub")
+        finnhub_url = f"https://finnhub.io/api/v1/stock/profile2?symbol={symbol}&token={FINNHUB_TOKEN}"
+        resp = requests.get(finnhub_url, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data and data.get("logo") and data["logo"].strip():
+                return data["logo"]
     except Exception as e:
         print(f"Finnhub logo fetch error for {symbol}: {e}")
 
-    # 2. Optional fallback using Clearbit (requires domain)
-    if domain_fallback:
-        clearbit_url = f"https://logo.clearbit.com/{domain_fallback}"
-        return clearbit_url
+    # 2. Try Yahoo Finance logo (alternative approach)
+    try:
+        print("print yahoo finance")
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+        if info and info.get("logo_url"):
+            return info["logo_url"]
+    except Exception as e:
+        print(f"Yahoo Finance logo fetch error for {symbol}: {e}")
 
-    # 3. No logo found
+    # 3. Optional fallback using Clearbit (requires domain)
+    if domain_fallback:
+        try:
+            print("Using clearbit")
+            clearbit_url = f"https://logo.clearbit.com/{domain_fallback}"
+            # Test if the Clearbit logo exists
+            resp = requests.head(clearbit_url, timeout=3)
+            if resp.status_code == 200:
+                return clearbit_url
+        except Exception as e:
+            print(f"Clearbit logo fetch error for {symbol}: {e}")
+
+    # 4. Generic fallback logos based on common company patterns
+    common_logos = {
+        'AAPL': 'https://logo.clearbit.com/apple.com',
+        'GOOGL': 'https://logo.clearbit.com/google.com',
+        'GOOG': 'https://logo.clearbit.com/google.com',
+        'MSFT': 'https://logo.clearbit.com/microsoft.com',
+        'AMZN': 'https://logo.clearbit.com/amazon.com',
+        'TSLA': 'https://logo.clearbit.com/tesla.com',
+        'META': 'https://logo.clearbit.com/meta.com',
+        'NVDA': 'https://logo.clearbit.com/nvidia.com',
+        'NFLX': 'https://logo.clearbit.com/netflix.com',
+        'ADBE': 'https://logo.clearbit.com/adobe.com'
+    }
+    
+    if symbol in common_logos:
+        return common_logos[symbol]
+
+    # 5. No logo found
     return None
 
 @portfolio_bp.route("/recommendationsandsentiment", methods=["GET"])
@@ -1083,8 +1134,12 @@ def recommendations_and_sentiment():
     user_id = request.args.get("user_id", 1)
     stocks = get_user_stocks(user_id)
 
-    results = [get_finnhub_data(symbol) for symbol in stocks]
-    #companies_logos = [get_company_logo(symbol) for symbol in stocks]  # Example for first symbol
+    results = []
+    for symbol in stocks:
+        stock_data = get_finnhub_data(symbol)
+        stock_data['logo'] = get_company_logo(symbol)
+        results.append(stock_data)
+    
     return jsonify(results)
 
 
@@ -1250,3 +1305,40 @@ def get_user_transactions():
     finally:
         cursor.close()
         conn.close()
+@portfolio_bp.route("/marketsindices")
+def get_market_indices():
+    """Get market indices data from Yahoo Finance"""
+    indices = {
+        "NASDAQ": "^IXIC",
+        "S&P 500": "^GSPC",
+        "Dow Jones": "^DJI",
+        "EUR-USD": "EURUSD=X",
+        "Bitcoin": "BTC-USD",
+        "Gold": "GC=F", 
+        "Oil": "CL=F",
+    }
+    
+    results = []
+    for name, symbol in indices.items():
+        try:
+            ticker = yf.Ticker(symbol)
+            info = ticker.info
+            
+            index_data = {
+                "name": name,
+                "symbol": symbol,
+                "currentPrice": info.get('currentPrice', info.get('regularMarketPrice', 0)),
+                "previousClose": info.get('previousClose', 0),
+                "change": info.get('regularMarketChange', 0),
+                "changePercent": info.get('regularMarketChangePercent', 0),
+                "marketCap": info.get('marketCap', 0),
+                "volume": info.get('volume', 0),
+                "currency": info.get('currency', 'USD')
+            }
+            
+            results.append(index_data)
+            
+        except Exception as e:
+            print(f"Error fetching data for {name} ({symbol}): {e}")
+    
+    return jsonify(results) 
