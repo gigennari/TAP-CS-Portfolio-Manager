@@ -1080,8 +1080,8 @@ def recommendations_and_sentiment():
     stocks = get_user_stocks(user_id)
 
     results = [get_finnhub_data(symbol) for symbol in stocks]
-    companies_logos = [get_company_logo(symbol) for symbol in stocks]  # Example for first symbol
-    return jsonify(results, companies_logos)
+    #companies_logos = [get_company_logo(symbol) for symbol in stocks]  # Example for first symbol
+    return jsonify(results)
 
 
 def fetch_yahoo_news(symbols):
