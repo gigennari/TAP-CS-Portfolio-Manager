@@ -1257,3 +1257,42 @@ def get_news():
     """Get financial news with images extracted from article pages"""
     symbols = "^GSPC,BTC-USD,EURUSD=X"
     return jsonify(fetch_yahoo_news(symbols))
+
+
+@portfolio_bp.route("/marketsindices")
+def get_market_indices():
+    """Get market indices data from Yahoo Finance"""
+    indices = {
+        "NASDAQ": "^IXIC",
+        "S&P 500": "^GSPC",
+        "Dow Jones": "^DJI",
+        "EUR-USD": "EURUSD=X",
+        "Bitcoin": "BTC-USD",
+        "Gold": "GC=F", 
+        "Oil": "CL=F",
+    }
+    
+    results = []
+    for name, symbol in indices.items():
+        try:
+            ticker = yf.Ticker(symbol)
+            info = ticker.info
+            
+            index_data = {
+                "name": name,
+                "symbol": symbol,
+                "currentPrice": info.get('currentPrice', info.get('regularMarketPrice', 0)),
+                "previousClose": info.get('previousClose', 0),
+                "change": info.get('regularMarketChange', 0),
+                "changePercent": info.get('regularMarketChangePercent', 0),
+                "marketCap": info.get('marketCap', 0),
+                "volume": info.get('volume', 0),
+                "currency": info.get('currency', 'USD')
+            }
+            
+            results.append(index_data)
+            
+        except Exception as e:
+            print(f"Error fetching data for {name} ({symbol}): {e}")
+    
+    return jsonify(results) 
