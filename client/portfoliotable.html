@@ -1057,6 +1057,8 @@
                 showPortfolioError('Failed to load portfolio data');
             } finally {
                 showPortfolioLoading(false);
+            }
+        }
         function renderStockLogo(stock) {
             if (stock.logo) {
                 return `<img src="${stock.logo}" class="stock-logo" onerror="this.style.display='none';">`;
