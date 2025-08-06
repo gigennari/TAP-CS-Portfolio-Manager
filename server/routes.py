@@ -899,6 +899,83 @@ def get_historical_balance_for_user():
         if not user_id:
             return jsonify({"error": "user_id is required"}), 400
 
+        # Get current account balance
+        cursor.execute("""
+            SELECT a.balance 
+            FROM accounts a
+            WHERE a.user_id = %s
+        """, (user_id,))
+        result = cursor.fetchone()
+        if not result:
+            return jsonify({"error": "Account not found"}), 404
+
+        current_balance = result['balance']
+
+        # Get all transactions in the past year
+        query = """
+            SELECT t.transaction_type, t.price, t.quantity, t.transaction_date
+            FROM stockstransactions t
+            JOIN stocksportfolios sp ON t.stocksportfolios_id = sp.id
+            JOIN portfolios p ON sp.portfolios_id = p.id
+            JOIN accounts a ON p.account_id = a.id
+            WHERE a.user_id = %s
+            AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+            ORDER BY t.transaction_date DESC
+        """
+        cursor.execute(query, (user_id,))
+        transactions = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # Convert to DataFrame
+        df = pd.DataFrame(transactions)
+        df['transaction_date'] = pd.to_datetime(df['transaction_date'])
+        df['date'] = df['transaction_date'].dt.date
+
+        # Cash flow REVERSED to undo effects day by day
+        df['reverse_cash'] = df.apply(
+            lambda x: x['price'] * x['quantity'] if x['transaction_type'] == 'buy' else -x['price'] * x['quantity'],
+            axis=1
+        )
+
+        # Aggregate by day
+        daily_reversal = df.groupby('date')['reverse_cash'].sum()
+
+        # Build full date range
+        end_date = datetime.today().date()
+        start_date = end_date - timedelta(days=365)
+        date_range = pd.date_range(start=start_date, end=end_date)
+        balance_series = pd.Series(
+            [Decimal('0.00')] * len(date_range),
+            index=date_range.date,
+            dtype='object'
+        )
+        balance_series[:] = 0
+
+        # Fill in reversed cash changes
+        balance_series.update(daily_reversal)
+
+        # Backward cumulative sum (from today → past), then reverse it
+        balance_series = balance_series[::-1].cumsum()[::-1]
+
+        # Add current balance to get historical balances
+        balance_series = current_balance + balance_series
+
+        result = [{'date': str(date), 'balance': round(balance, 2)} for date, balance in balance_series.items()]
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error getting historical balance: {e}")
+        return jsonify({"error": f"Failed to get historical balance: {e}"}), 500
+
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+
         # Get user's initial account balance
         cursor.execute("""
             SELECT a.balance 
