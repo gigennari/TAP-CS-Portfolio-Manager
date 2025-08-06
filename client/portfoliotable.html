@@ -174,11 +174,11 @@
             <!-- Cumulative Return Calculator -->
             <div class="bg-white rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-slate-900">Cumulative Return Calculator</h3>
-                    <div class="flex items-center space-x-2">
+                    <h3 class="text-xl font-semibold text-slate-900">Cumulative Return</h3>
+                    <!-- <div class="flex items-center space-x-2">
                         <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
                         <span class="text-sm text-slate-600">Performance Analysis</span>
-                    </div>
+                    </div> -->
                 </div>
                 
                 <!-- Date Range Selector -->
@@ -223,20 +223,16 @@
                     <div id="returnResults" class="hidden">
                         <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6">
                             <div class="text-center">
-                                <div class="text-sm text-slate-600 mb-2">Cumulative Return</div>
                                 <div class="text-4xl font-bold mb-4" id="cumulativeReturn">0.00%</div>
-                                <div class="text-sm text-slate-500 mb-4" id="returnFormula">
-                                    (Portfolio Value End - Cost Start) / Cost Start
-                                </div>
                             </div>
                             
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                                 <div class="bg-white rounded-lg p-4 text-center">
-                                    <div class="text-sm text-slate-500 mb-1">Start Cost</div>
+                                    <div class="text-sm text-slate-500 mb-1">Start Total Value</div>
                                     <div class="text-lg font-bold text-slate-900" id="startCost">$0.00</div>
                                 </div>
                                 <div class="bg-white rounded-lg p-4 text-center">
-                                    <div class="text-sm text-slate-500 mb-1">End Portfolio Value</div>
+                                    <div class="text-sm text-slate-500 mb-1">End Total Value</div>
                                     <div class="text-lg font-bold text-slate-900" id="endPortfolioValue">$0.00</div>
                                 </div>
                                 <div class="bg-white rounded-lg p-4 text-center">
@@ -1388,17 +1384,17 @@
             try {
                 showReturnCalculatorState('loading');
 
-                // Fetch both portfolio value and cost data
-                const [valueResponse, costResponse] = await Promise.all([
+                // Fetch portfolio value and balance data
+                const [valueResponse, balanceResponse] = await Promise.all([
                     fetch(`${API_BASE}/historical-data?user_id=${currentUserId}`),
-                    fetch(`${API_BASE}/historical-cost?user_id=${currentUserId}`)
+                    fetch(`${API_BASE}/historical-balance?user_id=${currentUserId}`)
                 ]);
 
                 const valueData = await valueResponse.json();
-                const costData = await costResponse.json();
+                const balanceData = await balanceResponse.json();
 
-                if (valueData.error || costData.error) {
-                    throw new Error(valueData.error || costData.error);
+                if (valueData.error || balanceData.error) {
+                    throw new Error(valueData.error || balanceData.error);
                 }
 
                 // Filter data for the selected date range
@@ -1407,32 +1403,55 @@
                     return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
                 });
 
-                const filteredCostData = costData.filter(item => {
+                const filteredBalanceData = balanceData.filter(item => {
                     const itemDate = new Date(item.date);
                     return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
                 });
 
-                if (filteredValueData.length === 0 || filteredCostData.length === 0) {
+                if (filteredValueData.length === 0 || filteredBalanceData.length === 0) {
                     throw new Error('No data available for the selected date range');
                 }
 
                 // Sort by date
                 filteredValueData.sort((a, b) => new Date(a.date) - new Date(b.date));
-                filteredCostData.sort((a, b) => new Date(a.date) - new Date(b.date));
+                filteredBalanceData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                // Get start cost and end portfolio value
-                const startCost = parseFloat(filteredCostData[0].value);
-                const endPortfolioValue = parseFloat(filteredValueData[filteredValueData.length - 1].value);
+                // Get start and end values with proper parsing and fallbacks
+                const startPortfolioValue = parseFloat(filteredValueData[0].value || filteredValueData[0].portfolio_value || 0);
+                const endPortfolioValue = parseFloat(filteredValueData[filteredValueData.length - 1].value || filteredValueData[filteredValueData.length - 1].portfolio_value || 0);
+                const startBalance = parseFloat(filteredBalanceData[0].value || filteredBalanceData[0].balance || 0);
+                const endBalance = parseFloat(filteredBalanceData[filteredBalanceData.length - 1].value || filteredBalanceData[filteredBalanceData.length - 1].balance || 0);
 
-                // Calculate cumulative return using the specified formula
-                // Cumulative Return = (Portfolio Value End - Cost Start) / Cost Start
-                const cumulativeReturn = startCost > 0 ? ((endPortfolioValue - startCost) / startCost) * 100 : 0;
-                const absoluteGainLoss = endPortfolioValue - startCost;
+                // Debug logging
+                console.log('Start Portfolio Value:', startPortfolioValue);
+                console.log('End Portfolio Value:', endPortfolioValue);
+                console.log('Start Balance:', startBalance);
+                console.log('End Balance:', endBalance);
+                console.log('Value Data Sample:', filteredValueData[0]);
+                console.log('Balance Data Sample:', filteredBalanceData[0]);
+
+                // Validate parsed values
+                if (isNaN(startPortfolioValue) || isNaN(endPortfolioValue) || isNaN(startBalance) || isNaN(endBalance)) {
+                    throw new Error('Invalid data format received from API');
+                }
+
+                // Calculate total values (portfolio + balance)
+                const startTotalValue = startPortfolioValue + startBalance;
+                const endTotalValue = endPortfolioValue + endBalance;
+
+                // Calculate cumulative return using the new formula
+                // Return = ((portfolio_value_end + balance_end) - (portfolio_value_start + balance_start)) / (portfolio_value_start + balance_start)
+                const cumulativeReturn = startTotalValue > 0 ? ((endTotalValue - startTotalValue) / startTotalValue) * 100 : 0;
+                const absoluteGainLoss = endTotalValue - startTotalValue;
 
                 // Update UI
                 updateReturnResults({
-                    startCost: startCost,
+                    startPortfolioValue: startPortfolioValue,
                     endPortfolioValue: endPortfolioValue,
+                    startBalance: startBalance,
+                    endBalance: endBalance,
+                    startTotalValue: startTotalValue,
+                    endTotalValue: endTotalValue,
                     cumulativeReturn: cumulativeReturn,
                     absoluteGainLoss: absoluteGainLoss
                 });
@@ -1447,30 +1466,36 @@
         }
 
         function updateReturnResults(data) {
-            // Update start cost
-            document.getElementById('startCost').textContent = '$' + data.startCost.toLocaleString('en-US', { 
+            // Validate data before updating UI
+            const startTotal = isNaN(data.startTotalValue) ? 0 : data.startTotalValue;
+            const endTotal = isNaN(data.endTotalValue) ? 0 : data.endTotalValue;
+            const cumulativeRet = isNaN(data.cumulativeReturn) ? 0 : data.cumulativeReturn;
+            const absoluteGain = isNaN(data.absoluteGainLoss) ? 0 : data.absoluteGainLoss;
+
+            // Update start total value (portfolio + balance)
+            document.getElementById('startCost').textContent = '$' + startTotal.toLocaleString('en-US', { 
                 minimumFractionDigits: 2, 
                 maximumFractionDigits: 2 
             });
             
-            // Update end portfolio value
-            document.getElementById('endPortfolioValue').textContent = '$' + data.endPortfolioValue.toLocaleString('en-US', { 
+            // Update end total value (portfolio + balance)
+            document.getElementById('endPortfolioValue').textContent = '$' + endTotal.toLocaleString('en-US', { 
                 minimumFractionDigits: 2, 
                 maximumFractionDigits: 2 
             });
 
             // Update cumulative return with color coding
             const cumulativeReturnElement = document.getElementById('cumulativeReturn');
-            cumulativeReturnElement.textContent = (data.cumulativeReturn >= 0 ? '+' : '') + data.cumulativeReturn.toFixed(2) + '%';
-            cumulativeReturnElement.className = 'text-4xl font-bold mb-4 ' + (data.cumulativeReturn >= 0 ? 'text-emerald-600' : 'text-red-600');
+            cumulativeReturnElement.textContent = (cumulativeRet >= 0 ? '+' : '') + cumulativeRet.toFixed(2) + '%';
+            cumulativeReturnElement.className = 'text-4xl font-bold mb-4 ' + (cumulativeRet >= 0 ? 'text-emerald-600' : 'text-red-600');
 
             // Update absolute gain/loss with color coding
             const absoluteGainLossElement = document.getElementById('absoluteGainLoss');
-            absoluteGainLossElement.textContent = (data.absoluteGainLoss >= 0 ? '+' : '') + '$' + Math.abs(data.absoluteGainLoss).toLocaleString('en-US', { 
+            absoluteGainLossElement.textContent = (absoluteGain >= 0 ? '+' : '') + '$' + Math.abs(absoluteGain).toLocaleString('en-US', { 
                 minimumFractionDigits: 2, 
                 maximumFractionDigits: 2 
             });
-            absoluteGainLossElement.className = 'text-lg font-bold ' + (data.absoluteGainLoss >= 0 ? 'text-emerald-600' : 'text-red-600');
+            absoluteGainLossElement.className = 'text-lg font-bold ' + (absoluteGain >= 0 ? 'text-emerald-600' : 'text-red-600');
         }
 
         function showReturnCalculatorState(state) {
