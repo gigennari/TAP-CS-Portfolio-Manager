@@ -240,7 +240,6 @@ def execute_trade():
         symbol = data['symbol'].upper()
         action = data['action'].lower()  # 'buy' or 'sell'
         quantity = Decimal(data['quantity'])
-        order_type = data.get('orderType', 'market') # market or limit 
         price = Decimal(data.get('estimatedPrice', None))
         
         if action not in ['buy', 'sell']:
@@ -252,23 +251,18 @@ def execute_trade():
         # Get current stock price for validation
         ticker = yf.Ticker(symbol)
         
-        # Calculate trade value
-        # send an erorr message for limit orders, sying it is not supported yet
-        if order_type == 'limit':
-            return jsonify({"error": "Limit price must be positive"}), 400
         
-        if order_type == 'market':
-            trade_price = price
-            
+        trade_price = price
         
-            # Here you would typically:
-            # 1. Check user's account balance (for buy orders)  
-            date = datetime.now().isoformat()
-            if action == 'buy':
-                result = buy_stock(user_id, symbol, quantity, trade_price, date)
-            # 2. Check user's stock holdings (for sell orders)
-            elif action == 'sell':
-                result = sell_stock(user_id, symbol, quantity, trade_price, date)
+    
+        # Here you would typically:
+        # 1. Check user's account balance (for buy orders)  
+        date = datetime.now().isoformat()
+        if action == 'buy':
+            result = buy_stock(user_id, symbol, quantity, trade_price, date)
+        # 2. Check user's stock holdings (for sell orders)
+        elif action == 'sell':
+            result = sell_stock(user_id, symbol, quantity, trade_price, date)
         
         return result, 200
         
