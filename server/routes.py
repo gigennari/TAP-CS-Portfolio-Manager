@@ -240,7 +240,6 @@ def execute_trade():
         symbol = data['symbol'].upper()
         action = data['action'].lower()  # 'buy' or 'sell'
         quantity = Decimal(data['quantity'])
-        order_type = data.get('orderType', 'market') # market or limit 
         price = Decimal(data.get('estimatedPrice', None))
         
         if action not in ['buy', 'sell']:
@@ -252,42 +251,18 @@ def execute_trade():
         # Get current stock price for validation
         ticker = yf.Ticker(symbol)
         
-        # Calculate trade value
-        # send an erorr message for limit orders, sying it is not supported yet
-        if order_type == 'limit':
-            return jsonify({"error": "Limit price must be positive"}), 400
         
-        if order_type == 'market':
-            trade_price = price
-            
+        trade_price = price
         
-            # Here you would typically:
-            # 1. Check user's account balance (for buy orders)  
-            date = datetime.now().isoformat()
-            if action == 'buy':
-                result = buy_stock(user_id, symbol, quantity, trade_price, date)
-            # 2. Check user's stock holdings (for sell orders)
-            elif action == 'sell':
-                result = sell_stock(user_id, symbol, quantity, trade_price, date)
-           
-        
-        
-        # # For now, we'll simulate a successful trade
-        # order_id = f"ORD{datetime.now().strftime('%Y%m%d%H%M%S')}{symbol}"
-        
-        # trade_result = {
-        #     "success": True,
-        #     "orderId": order_id,
-        #     "user_id": user_id,
-        #     "symbol": symbol,
-        #     "action": action,
-        #     "quantity": quantity,
-        #     "price": trade_price,
-        #     "totalValue": trade_value,
-        #     "orderType": order_type,
-        #     "timestamp": datetime.now().isoformat(),
-        #     "status": "executed"
-        # }
+    
+        # Here you would typically:
+        # 1. Check user's account balance (for buy orders)  
+        date = datetime.now().isoformat()
+        if action == 'buy':
+            result = buy_stock(user_id, symbol, quantity, trade_price, date)
+        # 2. Check user's stock holdings (for sell orders)
+        elif action == 'sell':
+            result = sell_stock(user_id, symbol, quantity, trade_price, date)
         
         return result, 200
         
@@ -654,12 +629,6 @@ def get_stock_history(symbol):
     except Exception as e:
         print(f"Error getting stock history for {symbol}: {e}")
         return jsonify({"error": f"Failed to get stock history for {symbol}"}), 500
-    
-    
-from flask import Blueprint, request, jsonify
-import pandas as pd
-import yfinance as yf
-from datetime import datetime, timedelta
 
 @portfolio_bp.route('/historical-data', methods=['GET'])
 def get_historical_data_for_user():
@@ -725,7 +694,7 @@ def get_historical_data_for_user():
 
             prices = hist.reindex(date_range.date).ffill()
             portfolio_values[symbol] = shares * prices[symbol]
-            print(portfolio_values)
+            
             # 🔥 Patch today's value with current price
             try:
                 current_price = yf.Ticker(symbol).fast_info['last_price']
@@ -734,7 +703,7 @@ def get_historical_data_for_user():
             except Exception as e:
                 print(f"Warning: Could not fetch current price for {symbol}: {e}")
                 today_values[symbol] = portfolio_values.at[today, symbol]
-            print(portfolio_values)
+            
         # Apply today's updated values
         for symbol in today_values:
             portfolio_values.loc[today_index, symbol] = today_values[symbol]
@@ -980,86 +949,6 @@ def get_historical_balance_for_user():
         
         balance_series[-1] = current_balance
 
-        result = [{'date': str(date), 'balance': round(balance, 2)} for date, balance in balance_series.items()]
-        return jsonify(result)
-
-    except Exception as e:
-        print(f"Error getting historical balance: {e}")
-        return jsonify({"error": f"Failed to get historical balance: {e}"}), 500
-
-    try:
-        conn = init_db()
-        cursor = conn.cursor(dictionary=True)
-        user_id = request.args.get('user_id')
-
-        if not user_id:
-            return jsonify({"error": "user_id is required"}), 400
-
-        # Get user's initial account balance
-        cursor.execute("""
-            SELECT a.balance 
-            FROM accounts a
-            WHERE a.user_id = %s
-        """, (user_id,))
-        result = cursor.fetchone()
-        if not result:
-            return jsonify({"error": "Account not found"}), 404
-
-        initial_balance = result['balance']
-
-        # Fetch user's transactions from past year
-        query = """
-            SELECT t.transaction_type, t.price, t.quantity, t.transaction_date
-            FROM stockstransactions t
-            JOIN stocksportfolios sp ON t.stocksportfolios_id = sp.id
-            JOIN portfolios p ON sp.portfolios_id = p.id
-            JOIN accounts a ON p.account_id = a.id
-            WHERE a.user_id = %s
-            AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
-            ORDER BY t.transaction_date;
-        """
-        cursor.execute(query, (user_id,))
-        transactions = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
-        # Convert to DataFrame
-        df = pd.DataFrame(transactions)
-        if df.empty:
-            # No transactions, balance remains unchanged
-            date_range = pd.date_range(end=datetime.today(), periods=365)
-            result = [{'date': d.date().isoformat(), 'balance': round(initial_balance, 2)} for d in date_range]
-            return jsonify(result)
-
-        df['transaction_date'] = pd.to_datetime(df['transaction_date'])
-        df['date'] = df['transaction_date'].dt.date
-
-        # Compute cash movement per transaction
-        df['cash_flow'] = df.apply(
-            lambda x: -x['price'] * x['quantity'] if x['transaction_type'] == 'buy' else x['price'] * x['quantity'],
-            axis=1
-        )
-
-        # Aggregate daily net cash movement
-        daily_cash = df.groupby('date')['cash_flow'].sum()
-
-        # Prepare full date range
-        start_date = datetime.today().date() - timedelta(days=365)
-        end_date = datetime.today().date()
-        date_range = pd.date_range(start=start_date, end=end_date)
-        balance_series = pd.Series(index=date_range.date, dtype='float64')
-
-        # Fill with daily net cash movement, NaN elsewhere
-        balance_series.update(daily_cash)
-
-        # Replace NaNs with 0 and compute cumulative sum
-        balance_series = balance_series.fillna(0).cumsum()
-
-        # Add initial balance
-        balance_series = initial_balance + balance_series
-
-        # Format output
         result = [{'date': str(date), 'balance': round(balance, 2)} for date, balance in balance_series.items()]
         return jsonify(result)
 
