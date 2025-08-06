@@ -877,6 +877,89 @@ def get_finnhub_data(symbol):
             "companyNewsScore": sentiment.get("companyNewsScore", 0)
         }
     }
+    
+@portfolio_bp.route('/historical-balance', methods=['GET'])
+def get_historical_balance_for_user():
+    try:
+        conn = init_db()
+        cursor = conn.cursor(dictionary=True)
+        user_id = request.args.get('user_id')
+
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+
+        # Get user's initial account balance
+        cursor.execute("""
+            SELECT a.balance 
+            FROM accounts a
+            WHERE a.user_id = %s
+        """, (user_id,))
+        result = cursor.fetchone()
+        if not result:
+            return jsonify({"error": "Account not found"}), 404
+
+        initial_balance = result['balance']
+
+        # Fetch user's transactions from past year
+        query = """
+            SELECT t.transaction_type, t.price, t.quantity, t.transaction_date
+            FROM stockstransactions t
+            JOIN stocksportfolios sp ON t.stocksportfolios_id = sp.id
+            JOIN portfolios p ON sp.portfolios_id = p.id
+            JOIN accounts a ON p.account_id = a.id
+            WHERE a.user_id = %s
+            AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+            ORDER BY t.transaction_date;
+        """
+        cursor.execute(query, (user_id,))
+        transactions = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        # Convert to DataFrame
+        df = pd.DataFrame(transactions)
+        if df.empty:
+            # No transactions, balance remains unchanged
+            date_range = pd.date_range(end=datetime.today(), periods=365)
+            result = [{'date': d.date().isoformat(), 'balance': round(initial_balance, 2)} for d in date_range]
+            return jsonify(result)
+
+        df['transaction_date'] = pd.to_datetime(df['transaction_date'])
+        df['date'] = df['transaction_date'].dt.date
+
+        # Compute cash movement per transaction
+        df['cash_flow'] = df.apply(
+            lambda x: -x['price'] * x['quantity'] if x['transaction_type'] == 'buy' else x['price'] * x['quantity'],
+            axis=1
+        )
+
+        # Aggregate daily net cash movement
+        daily_cash = df.groupby('date')['cash_flow'].sum()
+
+        # Prepare full date range
+        start_date = datetime.today().date() - timedelta(days=365)
+        end_date = datetime.today().date()
+        date_range = pd.date_range(start=start_date, end=end_date)
+        balance_series = pd.Series(index=date_range.date, dtype='float64')
+
+        # Fill with daily net cash movement, NaN elsewhere
+        balance_series.update(daily_cash)
+
+        # Replace NaNs with 0 and compute cumulative sum
+        balance_series = balance_series.fillna(0).cumsum()
+
+        # Add initial balance
+        balance_series = initial_balance + balance_series
+
+        # Format output
+        result = [{'date': str(date), 'balance': round(balance, 2)} for date, balance in balance_series.items()]
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error getting historical balance: {e}")
+        return jsonify({"error": f"Failed to get historical balance: {e}"}), 500
+
 
 @portfolio_bp.route("/recommendationsandsentiment", methods=["GET"])
 def recommendations_and_sentiment():
