@@ -180,7 +180,8 @@ def get_wallet():
                     "marketCap": info.get("market_cap", 0),
                     "volume": info.get("volume", 0),
                     "sector": sector,
-                    "industry": industry
+                    "industry": industry,
+                    "logo": get_company_logo(symbol)
                 }
 
             except Exception as stock_error:
@@ -201,7 +202,8 @@ def get_wallet():
                     "marketCap": 0,
                     "volume": 0,
                     "sector": "Unknown",
-                    "industry": "Unknown"
+                    "industry": "Unknown",
+                    "logo": get_company_logo(symbol)
                 }
 
             wallet_data.append(wallet_item)
