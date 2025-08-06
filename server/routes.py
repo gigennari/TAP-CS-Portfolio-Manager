@@ -843,7 +843,7 @@ def get_user_stocks(user_id):
     return stocks
 
 def get_finnhub_data(symbol):
-    """Fetch recommendation, price-target, and sentiment for a symbol using Finnhub."""
+    """Fetch recommendation, price-target, sentiment, company news, and news sentiment for a symbol using Finnhub."""
     
     # Get company name using Yahoo Finance (same as get_stock_info)
     try:
@@ -866,6 +866,17 @@ def get_finnhub_data(symbol):
     # News Sentiment
     sentiment_url = f"https://finnhub.io/api/v1/news-sentiment?symbol={symbol}&token={FINNHUB_TOKEN}"
     sentiment = requests.get(sentiment_url).json()
+    
+    # Company News (last 7 days)
+    from datetime import datetime, timedelta
+    to_date = datetime.now()
+    from_date = to_date - timedelta(days=7)
+    
+    company_news_url = f"https://finnhub.io/api/v1/company-news?symbol={symbol}&from={from_date.strftime('%Y-%m-%d')}&to={to_date.strftime('%Y-%m-%d')}&token={FINNHUB_TOKEN}"
+    company_news = requests.get(company_news_url).json()
+    
+    # Limit to top 5 news articles
+    company_news = company_news[:5] if company_news else []
 
     return {
         "symbol": symbol,
@@ -886,7 +897,9 @@ def get_finnhub_data(symbol):
             "bullishPercent": sentiment.get("bullishPercent", 0),
             "bearishPercent": sentiment.get("bearishPercent", 0),
             "companyNewsScore": sentiment.get("companyNewsScore", 0)
-        }
+        },
+        "company_news": company_news,
+        "news_sentiment": sentiment
     }
     
 @portfolio_bp.route('/historical-balance', methods=['GET'])
