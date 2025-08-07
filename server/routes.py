@@ -299,11 +299,12 @@ def buy_stock(user_id, symbol, quantity, price, date):
             #get portfolio id for user 
             cursor.execute("SELECT id FROM portfolios WHERE account_id = (SELECT id FROM accounts WHERE user_id = %s)", (user_id,)) #this will need to be changed if we have multiple portfolios per user
             portfolio_id = cursor.fetchone()['id']
+            
             print("portfolio_id", portfolio_id)
         
             
             #check if stock exists in stocksportfolios for that given user
-            cursor.execute("SELECT sp.id as row_num, sp.quantity, sp.average_cost, sp.stock_id, s.symbol FROM stocksportfolios sp JOIN accounts a on a.user_id = %s JOIN portfolios p on a.id = p.account_id JOIN stocks s on s.id = sp.stock_id AND s.symbol =%s", (user_id, symbol))
+            cursor.execute("SELECT sp.id as row_num, sp.quantity, sp.average_cost, sp.stock_id, s.symbol, a.user_id, p.account_id, p.id FROM stocksportfolios sp JOIN portfolios p on sp.portfolios_id = p.id JOIN accounts a on a.id = p.account_id JOIN stocks s on (s.id = sp.stock_id AND s.symbol =%s)  where a.user_id = %s ", (symbol, user_id))
             stock = cursor.fetchone()
             row_num_on_stocksportfolio = stock['row_num'] if stock else None
             print("row_num_on_stocksportfolio", row_num_on_stocksportfolio)
