@@ -171,18 +171,20 @@
                     <p class="text-slate-600 text-sm mt-1">Manage your investment portfolio</p>
                 </div>
                 
-                <!-- Navigation Menu -->
-                <nav class="flex items-center space-x-4 mr-6">
-                    <a href="portfoliotable.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium">
-                        Portfolio
-                    </a>
-                    <button onclick="openHomeBrokerPage()" class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium">
-                        Homebroker
-                    </button>
-                    <a href="news.html" class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium">
-                        News
-                    </a>
-                </nav>
+                <!-- Centered Navigation Menu -->
+                <div class="absolute left-1/2 transform -translate-x-1/2">
+                    <nav class="flex items-center space-x-1 bg-slate-100 rounded-lg p-1">
+                        <a href="portfoliotable.html" class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium shadow-sm">
+                            Portfolio
+                        </a>
+                        <button onclick="openHomeBrokerPage()" class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-white rounded-md transition-all duration-200 font-medium">
+                            Homebroker
+                        </button>
+                        <a href="news.html" class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-white rounded-md transition-all duration-200 font-medium">
+                            News
+                        </a>
+                    </nav>
+                </div>
                 
                 <!-- User Selection Dropdown -->
                 <div class="relative">
