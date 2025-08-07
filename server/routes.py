@@ -928,7 +928,6 @@ def get_historical_balance_for_user():
         # Aggregate by day
         daily_reversal = df.groupby('date')['reverse_cash'].sum()
 
-        print(daily_reversal)
         # Build full date range
         end_date = datetime.today().date()
         start_date = end_date - timedelta(days=365)
@@ -949,7 +948,6 @@ def get_historical_balance_for_user():
         # Add current balance to get historical balances
         balance_series = current_balance + balance_series
         
-        print(balance_series)
         balance_series.iloc[-1] = current_balance
 
         result_df = balance_series.reset_index()
