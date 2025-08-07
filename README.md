@@ -203,6 +203,9 @@ At the bottom right, the **Trade Stock** panel allows placing buy or sell orders
 
 ## News 
 
+
+---
+
 ## 📊 Market Indices Banner  
 
 | Market Type          | Index / Pair         | Number of Constituents | Weighting Method        | Sector / Asset Focus            | Volatility    |
@@ -215,4 +218,37 @@ At the bottom right, the **Trade Stock** panel allows placing buy or sell orders
 | 🥇** Commodities Market** | ** Gold (XAU / USD)** | 1 (Gold)               | Not applicable          | Precious metal & inflation hedge   |  Moderate     |
 | 🛢** Commodities Market** | ** Crude Oil (WTI)**  | 1 (Oil)                | Not applicable          | Energy commodity & macro indicator |  High          |
 
+---
+
+## 🌐 API Endpoints
+
+### 🔐 User & Accounts
+- `GET /users` – Get all users
+- `GET /balance?user_id=` – Get balance for a user
+- `GET /wallet?user_id=` – Get current wallet (holdings + prices)
+
+### 📈 Portfolio & Trading
+- `GET /portfoliovalue?user_id=` – Get total market value
+- `POST /trade` – Execute trade (`buy`/`sell` with JSON body)
+- `GET /transactions?user_id=` – Get all stock transactions
+
+### 📉 Historical Charts
+- `GET /historical-data?user_id=` – Portfolio value over time
+- `GET /historical-cost?user_id=` – Invested cost over time
+- `GET /historical-balance?user_id=` – Cash balance over time
+
+### 📊 Market Data
+- `GET /search?query=` – Search stocks via Alpha Vantage
+- `GET /stock/<symbol>` – Get detailed stock info
+- `GET /stock/<symbol>/history?frontend_period=1M` – Historical prices for a stock (supports periods like `1D`, `5D`, `1M`, `3M`, `1Y`)
+- `GET /marketsindices` – Get stock indices, currencies, and commodities
+
+### 🧠 Recommendations & News
+- `GET /recommendationsandsentiment?user_id=` – Portfolio-wide analyst recommendations, price targets, sentiment
+- `GET /news` – Get financial news with images
+
+## 👥 Team Members
+- **[Baibhav Barwal](https://github.com/baiibhav)**
+- **[Giovana Gennari Jungklaus](https://github.com/gigennari)**
+- **[Yixuan Wang](https://github.com/YixuanWang1122)**
 
