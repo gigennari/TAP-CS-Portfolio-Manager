@@ -51,14 +51,9 @@ Run this command on bash:
 * The stocksportfolios is an intermediate table that links portfolios to stocks through foreign keys.
 * Each portfolio can hold multiple stocks.
 * The row in stocksportfolio is never deleted when a stock is removed from a portfolio; instead, the corresponding entry in stocksportfolios is marked as inactive.
-
 * Each stock can appear in multiple portfolios.
-
 * Each transaction is linked to a specific stock within a portfolio.
- 
-* Transactions include details such as date, quantity, price, and type (buy or sell).
-
-
+* Transactions include details such as date, quantity, price, and type (buy or sell)
 * The application supports both **buy** and **sell** transactions for stocks.
 * The application does not support short-selling or margin trading.
 * The application supports only **long positions**.
