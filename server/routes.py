@@ -916,7 +916,8 @@ def get_historical_balance_for_user():
         # Convert to DataFrame
         df = pd.DataFrame(transactions)
         df['transaction_date'] = pd.to_datetime(df['transaction_date'])
-        df['date'] = df['transaction_date'].dt.date
+        df['date'] = (df['transaction_date'] - pd.Timedelta(days=1)).dt.date
+
 
         # Cash flow REVERSED to undo effects day by day
         df['reverse_cash'] = df.apply(
@@ -927,6 +928,7 @@ def get_historical_balance_for_user():
         # Aggregate by day
         daily_reversal = df.groupby('date')['reverse_cash'].sum()
 
+        print(daily_reversal)
         # Build full date range
         end_date = datetime.today().date()
         start_date = end_date - timedelta(days=365)
@@ -947,9 +949,12 @@ def get_historical_balance_for_user():
         # Add current balance to get historical balances
         balance_series = current_balance + balance_series
         
-        balance_series[-1] = current_balance
+        print(balance_series)
+        balance_series.iloc[-1] = current_balance
 
-        result = [{'date': str(date), 'balance': round(balance, 2)} for date, balance in balance_series.items()]
+        result_df = balance_series.reset_index()
+        result_df.columns = ['date', 'balance']
+        result = result_df.to_dict(orient='records')
         return jsonify(result)
 
     except Exception as e:

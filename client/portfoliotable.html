@@ -248,7 +248,7 @@
             <div class="portfolio-card value-card bg-white rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-slate-500 text-sm font-medium">Total Portfolio Value</p>
+                        <p class="text-slate-500 text-sm font-medium">Portfolio Value</p>
                         <p class="card-value shimmer-text text-3xl font-bold text-slate-900" id="totalValue">$0</p>
                         <p class="text-slate-500 text-sm font-medium mt-1">Invested Assets</p>
                     </div>
@@ -1684,14 +1684,16 @@
             try {
                 showPortfolioChartState('loading');
                 
-                // Fetch both portfolio value and cost data
-                const [valueResponse, costResponse] = await Promise.all([
+                // Fetch portfolio value, cost data, and historical balance data
+                const [valueResponse, costResponse, balanceResponse] = await Promise.all([
                     fetch(`${API_BASE}/historical-data?user_id=${userId}`),
-                    fetch(`${API_BASE}/historical-cost?user_id=${userId}`)
+                    fetch(`${API_BASE}/historical-cost?user_id=${userId}`),
+                    fetch(`${API_BASE}/historical-balance?user_id=${userId}`)
                 ]);
                 
                 const valueData = await valueResponse.json();
                 const costData = await costResponse.json();
+                const balanceData = await balanceResponse.json();
                 
                 if (valueData.error) {
                     throw new Error(valueData.error);
@@ -1701,7 +1703,11 @@
                     throw new Error(costData.error);
                 }
                 
-                updatePortfolioTrendChart(valueData, costData);
+                if (balanceData.error) {
+                    throw new Error(balanceData.error);
+                }
+                
+                updatePortfolioTrendChart(valueData, costData, balanceData);
                 showPortfolioChartState('chart');
                 
             } catch (error) {
@@ -1710,7 +1716,7 @@
             }
         }
 
-        function updatePortfolioTrendChart(valueData, costData) {
+        function updatePortfolioTrendChart(valueData, costData, balanceData) {
             // Destroy existing chart if it exists
             if (portfolioTrendChart) {
                 portfolioTrendChart.destroy();
@@ -1719,10 +1725,12 @@
             // Sort data by date to ensure chronological order
             const sortedValueData = valueData.sort((a, b) => new Date(a.date) - new Date(b.date));
             const sortedCostData = costData.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const sortedBalanceData = balanceData.sort((a, b) => new Date(a.date) - new Date(b.date));
             
             // Filter data to show only the requested number of days (latest days)
             const filteredValueData = sortedValueData.slice(-currentPortfolioPeriod);
             const filteredCostData = sortedCostData.slice(-currentPortfolioPeriod);
+            const filteredBalanceData = sortedBalanceData.slice(-currentPortfolioPeriod);
 
             // Prepare data for Chart.js
             const labels = filteredValueData.map(item => {
@@ -1736,18 +1744,47 @@
                 }
             });
             
-            const values = filteredValueData.map(item => parseFloat(item.value));
+            // Get current account balance and portfolio value from the displayed values for today's exact value
+            const accountBalanceText = document.getElementById('accountBalance').textContent;
+            const portfolioValueText = document.getElementById('totalValue').textContent;
+            
+            // Parse the displayed values (remove $ and commas)
+            const currentAccountBalance = parseFloat(accountBalanceText.replace(/[$,]/g, '')) || 0;
+            const currentPortfolioValue = parseFloat(portfolioValueText.replace(/[$,]/g, '')) || 0;
+            
+            // Extract historical data values
+            const portfolioValues = filteredValueData.map(item => parseFloat(item.value));
             const costs = filteredCostData.map(item => parseFloat(item.value));
+            const balances = filteredBalanceData.map(item => parseFloat(item.value));
+            
+            // Create a map of dates to balance values for proper matching
+            const balanceMap = new Map();
+            filteredBalanceData.forEach(item => {
+                balanceMap.set(item.date, parseFloat(item.balance));
+            });
+            
+            
+            // Calculate total values (portfolio value + account balance) for each day
+            const totalValues = filteredValueData.map((item, index) => {
+                const portfolioValue = parseFloat(item.value);
+                const balance = balanceMap.get(item.date) || 0; // Get balance for the same date
+                return portfolioValue + balance;
+            });
+            
+            // For today's value (last entry), use the exact displayed values to ensure accuracy
+            if (totalValues.length > 0) {
+                totalValues[totalValues.length - 1] = currentAccountBalance + currentPortfolioValue;
+            }
             
             // Calculate profit (portfolio value - cost)
-            const profits = values.map((value, index) => {
+            const profits = portfolioValues.map((portfolioValue, index) => {
                 const cost = costs[index] || 0;
-                return value - cost;
+                return portfolioValue - cost;
             });
             
             // Calculate percentage change from first value for better visualization
-            const firstValue = values[0] || 0;
-            const percentageData = values.map(value => 
+            const firstValue = totalValues[0] || 0;
+            const percentageData = totalValues.map(value => 
                 firstValue > 0 ? ((value - firstValue) / firstValue) * 100 : 0
             );
 
@@ -1757,14 +1794,14 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Portfolio Value',
-                            data: values,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            label: 'Total Asset Value (Portfolio + Cash)',
+                            data: totalValues,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             borderWidth: 3,
                             fill: true,
                             tension: 0.4,
-                            pointBackgroundColor: '#10b981',
+                            pointBackgroundColor: '#3b82f6',
                             pointBorderColor: '#ffffff',
                             pointBorderWidth: 2,
                             pointRadius: 4,
@@ -1772,26 +1809,20 @@
                             yAxisID: 'y'
                         },
                         {
-                            label: 'Total Cost',
-                            data: costs,
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0.4,
-                            pointBackgroundColor: '#f59e0b',
-                            pointBorderColor: '#ffffff',
-                            pointBorderWidth: 2,
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
-                            yAxisID: 'y'
+                            label: 'Profit',
+                            data: profits.map(profit => profit >= 0 ? profit : null),
+                            type: 'bar',
+                            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
                         },
                         {
-                            label: 'Profit/Loss',
-                            data: profits,
+                            label: 'Loss',
+                            data: profits.map(profit => profit < 0 ? profit : null),
                             type: 'bar',
-                            backgroundColor: profits.map(profit => profit >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
-                            borderColor: profits.map(profit => profit >= 0 ? '#10b981' : '#ef4444'),
+                            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                            borderColor: '#ef4444',
                             borderWidth: 1,
                             yAxisID: 'y1'
                         }
@@ -1830,13 +1861,16 @@
                                     const value = context.parsed.y;
                                     const datasetLabel = context.dataset.label;
                                     
-                                    if (datasetLabel === 'Portfolio Value') {
+                                    // Skip null values (used for separating profit/loss datasets)
+                                    if (value === null) {
+                                        return null;
+                                    }
+                                    
+                                    if (datasetLabel === 'Total Asset Value (Portfolio + Cash)') {
                                         const change = firstValue > 0 ? ((value - firstValue) / firstValue) * 100 : 0;
                                         const changeText = change >= 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
                                         return `${datasetLabel}: $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${changeText})`;
-                                    } else if (datasetLabel === 'Total Cost') {
-                                        return `${datasetLabel}: $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                                    } else if (datasetLabel === 'Profit/Loss') {
+                                    } else if (datasetLabel === 'Profit' || datasetLabel === 'Loss') {
                                         const sign = value >= 0 ? '+' : '';
                                         return `${datasetLabel}: ${sign}$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                                     }
