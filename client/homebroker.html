@@ -415,10 +415,23 @@
                     window.autoSelectUserId = null;
                 }
             } else {
-                // Auto-select user with ID = 1 if available (default user)
-                const defaultUser = users.find(user => user.id == 1);
-                if (defaultUser) {
-                    selectUser(defaultUser.id, defaultUser.username, defaultUser.email, defaultUser.name);
+                // Try to restore previously selected user from localStorage
+                const savedUserId = localStorage.getItem('selectedUserId');
+                let userToSelect = null;
+                
+                if (savedUserId) {
+                    // Try to find the previously selected user
+                    userToSelect = users.find(user => user.id == savedUserId);
+                }
+                
+                // If no saved user or saved user not found, fall back to user with ID = 1
+                if (!userToSelect) {
+                    userToSelect = users.find(user => user.id == 1);
+                }
+                
+                // Select the determined user
+                if (userToSelect) {
+                    selectUser(userToSelect.id, userToSelect.username, userToSelect.email, userToSelect.name);
                 }
             }
         }
@@ -431,6 +444,9 @@
                 email: email,
                 name: name
             };
+
+            // Save selected user to localStorage for persistence across pages
+            localStorage.setItem('selectedUserId', userId);
 
             // Update UI
             const displayName = name || username;

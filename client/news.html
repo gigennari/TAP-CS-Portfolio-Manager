@@ -786,18 +786,31 @@
 
                 usersList.innerHTML = usersHTML;
 
-                // Auto-select first user or user from URL
+                // Auto-select user from URL, localStorage, or default
                 const urlParams = new URLSearchParams(window.location.search);
-                const userId = urlParams.get('user_id');
+                const urlUserId = urlParams.get('user_id');
                 
-                if (userId) {
-                    const user = users.find(u => u.id == userId);
-                    if (user) {
-                        this.selectUser(user.id, user.username, user.email, user.name);
+                let userToSelect = null;
+                
+                if (urlUserId) {
+                    // Priority 1: User from URL parameter
+                    userToSelect = users.find(u => u.id == urlUserId);
+                } else {
+                    // Priority 2: Previously selected user from localStorage
+                    const savedUserId = localStorage.getItem('selectedUserId');
+                    if (savedUserId) {
+                        userToSelect = users.find(u => u.id == savedUserId);
                     }
-                } else if (users.length > 0) {
-                    const defaultUser = users[0];
-                    this.selectUser(defaultUser.id, defaultUser.username, defaultUser.email, defaultUser.name);
+                }
+                
+                // Priority 3: Fall back to first user if no saved user found
+                if (!userToSelect && users.length > 0) {
+                    userToSelect = users[0];
+                }
+                
+                // Select the determined user
+                if (userToSelect) {
+                    this.selectUser(userToSelect.id, userToSelect.username, userToSelect.email, userToSelect.name);
                 }
             }
 
@@ -809,6 +822,9 @@
                     email: email,
                     name: name
                 };
+
+                // Save selected user to localStorage for persistence across pages
+                localStorage.setItem('selectedUserId', userId);
 
                 // Update UI
                 const displayName = name || username;
