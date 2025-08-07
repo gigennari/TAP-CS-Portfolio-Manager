@@ -382,11 +382,11 @@
                             
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                                 <div class="bg-white rounded-lg p-4 text-center">
-                                    <div class="text-sm text-slate-500 mb-1">Start Total Value</div>
+                                    <div class="text-sm text-slate-500 mb-1">Start Asset Value</div>
                                     <div class="text-lg font-bold text-slate-900" id="startCost">$0.00</div>
                                 </div>
                                 <div class="bg-white rounded-lg p-4 text-center">
-                                    <div class="text-sm text-slate-500 mb-1">End Total Value</div>
+                                    <div class="text-sm text-slate-500 mb-1">End Asset Value</div>
                                     <div class="text-lg font-bold text-slate-900" id="endPortfolioValue">$0.00</div>
                                 </div>
                                 <div class="bg-white rounded-lg p-4 text-center">
@@ -2290,6 +2290,11 @@
             try {
                 showReturnCalculatorState('loading');
 
+                // Check if end date is today
+                const today = new Date();
+                const todayString = today.toISOString().split('T')[0];
+                const isEndDateToday = endDate === todayString;
+
                 // Fetch portfolio value and balance data
                 const [valueResponse, balanceResponse] = await Promise.all([
                     fetch(`${API_BASE}/historical-data?user_id=${currentUserId}`),
@@ -2322,17 +2327,37 @@
                 filteredValueData.sort((a, b) => new Date(a.date) - new Date(b.date));
                 filteredBalanceData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                // Get start and end values with proper parsing and fallbacks
+                // Get start values from API data
                 const startPortfolioValue = parseFloat(filteredValueData[0].value || filteredValueData[0].portfolio_value || 0);
-                const endPortfolioValue = parseFloat(filteredValueData[filteredValueData.length - 1].value || filteredValueData[filteredValueData.length - 1].portfolio_value || 0);
                 const startBalance = parseFloat(filteredBalanceData[0].value || filteredBalanceData[0].balance || 0);
-                const endBalance = parseFloat(filteredBalanceData[filteredBalanceData.length - 1].value || filteredBalanceData[filteredBalanceData.length - 1].balance || 0);
+
+                let endPortfolioValue, endBalance;
+
+                // If end date is today, use current displayed values instead of API data
+                if (isEndDateToday) {
+                    // Get current values from the displayed UI elements
+                    const accountBalanceText = document.getElementById('accountBalance').textContent;
+                    const portfolioValueText = document.getElementById('totalValue').textContent;
+                    
+                    // Parse the displayed values (remove $ and commas)
+                    endBalance = parseFloat(accountBalanceText.replace(/[$,]/g, '')) || 0;
+                    endPortfolioValue = parseFloat(portfolioValueText.replace(/[$,]/g, '')) || 0;
+                    
+                    console.log('Using current displayed values for today:');
+                    console.log('Current Portfolio Value:', endPortfolioValue);
+                    console.log('Current Account Balance:', endBalance);
+                } else {
+                    // Use API data for historical dates
+                    endPortfolioValue = parseFloat(filteredValueData[filteredValueData.length - 1].value || filteredValueData[filteredValueData.length - 1].portfolio_value || 0);
+                    endBalance = parseFloat(filteredBalanceData[filteredBalanceData.length - 1].value || filteredBalanceData[filteredBalanceData.length - 1].balance || 0);
+                }
 
                 // Debug logging
                 console.log('Start Portfolio Value:', startPortfolioValue);
                 console.log('End Portfolio Value:', endPortfolioValue);
                 console.log('Start Balance:', startBalance);
                 console.log('End Balance:', endBalance);
+                console.log('Is End Date Today:', isEndDateToday);
                 console.log('Value Data Sample:', filteredValueData[0]);
                 console.log('Balance Data Sample:', filteredBalanceData[0]);
 
