@@ -797,11 +797,12 @@ def get_user_stocks(user_id):
     
     
     cursor.execute("""
-        SELECT DISTINCT stock_id, stocks.symbol AS symbol
+        SELECT DISTINCT stock_id, stocks.symbol AS symbol, sp.average_cost AS average_cost, sp.quantity as qty
         FROM stocksportfolios
         JOIN stocks ON stocksportfolios.stock_id = stocks.id
         WHERE portfolios_id = %s
         LIMIT 10
+        ORDER BY (qty * average_cost) DESC
     """, (user_id,))
     rows = cursor.fetchall()
     conn.close()
