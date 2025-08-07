@@ -197,12 +197,14 @@ At the bottom right, the **Trade Stock** panel allows placing buy or sell orders
   -If you don't have enough shares, an error message appears
 
 
-
-
 ---
 
 ## News 
 
+![News](/screenshots/news.png)
+
+- Market articles come from Yahoo Finance RSS. 
+- Recommendations and setinements are analyzed for the main stocks a user holds.  
 
 ---
 
@@ -215,8 +217,8 @@ At the bottom right, the **Trade Stock** panel allows placing buy or sell orders
 | 📈 **US Stock Market**  | **Dow Jones (DJIA)** | 30                     | Price-weighted          | Blue-chip, industrial focus     | Low–Moderate  |
 | 💱**Foreign Exchange** | **EUR/USD**          | 2 (Euro vs US Dollar)  | Not applicable          | Major currency pair (forex)     | Moderate–High |
 | 🪙 **Crypto**            | **BTC/USD**          | 1 (Bitcoin)            | Not applicable          | Cryptocurrency (decentralized)  | Very High     |
-| 🥇** Commodities Market** | ** Gold (XAU / USD)** | 1 (Gold)               | Not applicable          | Precious metal & inflation hedge   |  Moderate     |
-| 🛢** Commodities Market** | ** Crude Oil (WTI)**  | 1 (Oil)                | Not applicable          | Energy commodity & macro indicator |  High          |
+| 🥇 **Commodities Market** | ** Gold (XAU / USD)** | 1 (Gold)               | Not applicable          | Precious metal & inflation hedge   |  Moderate     |
+| 🛢 **Commodities Market** | ** Crude Oil (WTI)**  | 1 (Oil)                | Not applicable          | Energy commodity & macro indicator |  High          |
 
 ---
 
