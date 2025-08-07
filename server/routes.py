@@ -797,12 +797,14 @@ def get_user_stocks(user_id):
     
     
     cursor.execute("""
-        SELECT DISTINCT stock_id, stocks.symbol AS symbol, sp.average_cost AS average_cost, sp.quantity as qty
-        FROM stocksportfolios
-        JOIN stocks ON stocksportfolios.stock_id = stocks.id
-        WHERE portfolios_id = %s
-        LIMIT 10
+        SELECT DISTINCT sp.stock_id as stock_id, s.symbol AS symbol, sp.average_cost AS average_cost, sp.quantity as qty
+        FROM stocksportfolios sp
+        JOIN stocks s ON sp.stock_id = s.id
+        JOIN portfolios p ON sp.portfolios_id = p.id
+        JOIN accounts a ON p.account_id = a.id
+        WHERE a.user_id = %s
         ORDER BY (qty * average_cost) DESC
+        LIMIT 10;
     """, (user_id,))
     rows = cursor.fetchall()
     conn.close()
@@ -840,6 +842,7 @@ def get_finnhub_data(symbol):
     # News Sentiment
     sentiment_url = f"https://finnhub.io/api/v1/news-sentiment?symbol={symbol}&token={FINNHUB_TOKEN}"
     sentiment = requests.get(sentiment_url).json()
+    print(f"Sentiment for {symbol}: {sentiment}")
     
     # Company News (last 7 days)
     from datetime import datetime, timedelta
