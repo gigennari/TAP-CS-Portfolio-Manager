@@ -2,6 +2,11 @@
 
 # Set Up 
 
+## Setting up the Database
+To set up our database, we used MySQL Workbench. We created a new schema called 'bygdb' and by running the SQL script located at `/data/createDatabase.sql`. This creates all necessary tables.
+
+To populate them with initial data, run the SQL script located at `/data/updateDatabase.sql`. This will insert sample data into the tables. This file can be modified to create new users. Users, accounts and portfolios ids are created via sql scripts - creation is not yet supported by the frontend.
+
 ## Running server
 ```bash
 cd server
@@ -25,6 +30,46 @@ Run this command on bash:
 # Our Database Structure
 ![database structure](screenshots/schema.png)
 
+## Relationships
+* users 1 -- 1 accounts: Each user has exactly one account.
+
+* accounts 1 -- * portfolios: Each account can have multiple portfolios.
+
+* portfolios 1 -- * stocksportfolios: Each portfolio can contain multiple stocks (represented by entries in stocksportfolios).
+
+* stocks 1 -- * stocksportfolios: Each stock can be in multiple portfolios.
+
+* stocksportfolios 1 -- * stockstransactions: Each entry in stocksportfolios can have multiple buy/sell transactions associated with it.
+
+## Assumptions
+* Users are unique.
+* Only one account per user is allowed.
+* Each account can have multiple portfolios.
+* Each portfolio contains a single equity asset class.
+* A user can only have one portfolio for a given asset class.
+* Only Equity portfolios are supported in this version of the project.
+* The stocksportfolios is an intermediate table that links portfolios to stocks through foreign keys.
+* Each portfolio can hold multiple stocks.
+* The row in stocksportfolio is never deleted when a stock is removed from a portfolio; instead, the corresponding entry in stocksportfolios is marked as inactive.
+
+* Each stock can appear in multiple portfolios.
+
+* Each transaction is linked to a specific stock within a portfolio.
+ 
+* Transactions include details such as date, quantity, price, and type (buy or sell).
+
+
+* The application supports both **buy** and **sell** transactions for stocks.
+* The application does not support short-selling or margin trading.
+* The application supports only **long positions**.
+* All stocks are bought and sold at current market prices.
+* A stock average cost is calculated as a weight average of the prices paid for each share purchased.
+* No dividends are paid out.
+* There is no commission fee when buying or selling stocks.
+* Buy Transactions are only executed if there are sufficient funds available in the account.
+* Sell Transactions are only executed if there are sufficient shares of the stock in the portfolio.
+* The application calculates the average cost of a stock based on its purchase history.
+* The application displays the daily change in portfolio value compared to the previous day.
 
 
 # The Application 
