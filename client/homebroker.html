@@ -1221,9 +1221,7 @@
             }
             
             const qty = parseFloat(quantity.value);
-            const price = orderType.value === 'limit' && document.getElementById('limitPrice').value 
-                ? parseFloat(document.getElementById('limitPrice').value)
-                : currentStock.currentPrice;
+            const price = currentStock.currentPrice;
             
             const total = qty * price;
             estimatedTotal.textContent = `$${total.toFixed(2)}`;
@@ -1264,7 +1262,9 @@
         }
 
         async function handleTradeSubmit(e) {
+       
             e.preventDefault();
+            
             
             if (!currentStock || !quantity.value) {
                 alert('Please select a stock and enter quantity');
@@ -1312,9 +1312,7 @@
                     showLoading(false);
                     
                     // Calculate the total cost of the purchase
-                    const stockPrice = orderType.value === 'limit' && document.getElementById('limitPrice').value 
-                        ? parseFloat(document.getElementById('limitPrice').value)
-                        : currentStock.currentPrice;
+                    const stockPrice = currentStock.currentPrice;
                     const totalCost = requestedQuantity * stockPrice;
                     
                     if (currentBalance === 0) {
