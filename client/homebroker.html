@@ -390,7 +390,10 @@
 
             const usersHTML = users.map(user => `
                 <div class="user-item p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0" 
-                     onclick="selectUser(${user.id}, '${user.username}', '${user.email}', '${user.name}')">
+                     data-user-id="${user.id}" 
+                     data-username="${user.username}" 
+                     data-email="${user.email}" 
+                     data-name="${user.name}">
                     <div class="flex items-center space-x-3">
                         <div class="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                             <span class="text-white text-xs font-medium">
@@ -408,6 +411,19 @@
             `).join('');
 
             usersList.innerHTML = usersHTML;
+            
+            // Add click event listeners to user items
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const userId = this.dataset.userId;
+                    const username = this.dataset.username;
+                    const email = this.dataset.email;
+                    const name = this.dataset.name;
+                    
+                    console.log('👆 User item clicked:', { userId, username, email, name });
+                    selectUser(userId, username, email, name);
+                });
+            });
             
             // Auto-select user if specified in URL parameters
             if (window.autoSelectUserId) {
@@ -440,6 +456,8 @@
         }
 
         function selectUser(userId, username, email, name) {
+            console.log('🔄 Selecting user:', { userId, username, email, name });
+            
             currentUserId = userId;
             currentUser = {
                 user_id: userId,
@@ -450,6 +468,11 @@
 
             // Save selected user to localStorage for persistence across pages
             localStorage.setItem('selectedUserId', userId);
+            
+            console.log('✅ User selection complete:');
+            console.log('   currentUserId:', currentUserId);
+            console.log('   currentUser:', currentUser);
+            console.log('   localStorage selectedUserId:', localStorage.getItem('selectedUserId'));
 
             // Update UI
             const displayName = name || username;
@@ -457,8 +480,6 @@
 
             // Close dropdown
             document.getElementById('userDropdownMenu').classList.add('hidden');
-            
-            console.log('Selected user for trading:', currentUser);
         }
 
         function showUserError(message) {
@@ -1354,6 +1375,11 @@
                 }
             }
             
+            console.log('🚀 Preparing trade submission:');
+            console.log('   currentUserId:', currentUserId);
+            console.log('   currentUser:', currentUser);
+            console.log('   localStorage selectedUserId:', localStorage.getItem('selectedUserId'));
+            
             const tradeData = {
                 user_id: currentUserId,
                 symbol: currentStock.symbol,
@@ -1361,6 +1387,8 @@
                 quantity: requestedQuantity,
                 estimatedPrice: currentStock.currentPrice
             };
+            
+            console.log('📦 Trade data being sent to API:', tradeData);
             
             // Show confirmation
             const userDisplayName = currentUser.name || currentUser.username;
@@ -1374,6 +1402,18 @@
             if (confirm(confirmMessage)) {
                 try {
                     showLoading(true);
+                    
+                    // Final validation before API call
+                    if (!currentUserId || !currentUser) {
+                        alert('❌ Error: No user selected. Please select a user and try again.');
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    console.log('🔍 Final validation before API call:');
+                    console.log('   currentUserId:', currentUserId);
+                    console.log('   tradeData.user_id:', tradeData.user_id);
+                    console.log('   Match:', currentUserId === tradeData.user_id);
                     
                     // Mock API call - replace with actual backend call
                     await mockExecuteTrade(tradeData);
@@ -1396,6 +1436,11 @@
         }
 
         async function mockExecuteTrade(tradeData) {
+            console.log('📡 Sending trade request to API:');
+            console.log('   URL:', `${API_BASE}/trade`);
+            console.log('   Method: POST');
+            console.log('   Body:', JSON.stringify(tradeData, null, 2));
+            
             try {
                 const response = await fetch(`${API_BASE}/trade`, {
                     method: 'POST',
@@ -1405,19 +1450,22 @@
                     body: JSON.stringify(tradeData)
                 });
                 
+                console.log('📡 API Response status:', response.status);
+                
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const result = await response.json();
+                console.log('✅ API Response:', result);
                 return result;
                 
             } catch (error) {
-                console.error('Trade execution error:', error);
+                console.error('❌ Trade execution error:', error);
                 
                 // Fallback to mock execution
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                console.log('Trade executed (mock):', tradeData);
+                console.log('🔄 Trade executed (mock):', tradeData);
                 return { success: true, orderId: Math.random().toString(36).substr(2, 9) };
             }
         }
