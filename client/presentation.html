@@ -66,7 +66,7 @@
             padding: 3rem;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            max-width: 900px;
+            max-width: 1200px;
             width: 100%;
             animation: slideUp 0.8s ease-out 0.3s both;
         }
@@ -205,9 +205,10 @@
         .slide-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
         .slide-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
         .slide-4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .slide-5 { background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); }
-        .slide-6 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .slide-7 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .slide-5 { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .slide-6 { background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); }
+        .slide-7 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .slide-8 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 
         /* Chart Animation */
         .chart-bar {
@@ -243,6 +244,7 @@
         <div class="progress-dot" onclick="goToSlide(4)"></div>
         <div class="progress-dot" onclick="goToSlide(5)"></div>
         <div class="progress-dot" onclick="goToSlide(6)"></div>
+        <div class="progress-dot" onclick="goToSlide(7)"></div>
     </div>
 
     <!-- Slide Container -->
@@ -317,7 +319,7 @@
                             </svg>
                         </div>
                         <h3 class="text-lg font-semibold text-slate-900 mb-2">Multi-User Support</h3>
-                        <p class="text-sm text-slate-600">Manage multiple portfolios with user-specific insights</p>
+                        <p class="text-sm text-slate-600">Manage multiple users with user-specific insights</p>
                     </div>
                     
                     <div class="feature-card text-center fade-in" style="animation-delay: 0.8s;">
@@ -327,7 +329,7 @@
                             </svg>
                         </div>
                         <h3 class="text-lg font-semibold text-slate-900 mb-2">Export & Reporting</h3>
-                        <p class="text-sm text-slate-600">Comprehensive reports in multiple formats (CSV / Excel)</p>
+                        <p class="text-sm text-slate-600">Transaction reports in multiple formats (CSV / Excel)</p>
                     </div>
                 </div>
             </div>
@@ -416,7 +418,7 @@
                                 </div>
                                 <div>
                                     <div class="font-medium text-slate-900">Alpha Vantage API</div>
-                                    <div class="text-sm text-slate-600">Real-time market data</div>
+                                    <div class="text-sm text-slate-600">Ticker searching functionality</div>
                                 </div>
                             </div>
                             
@@ -426,7 +428,7 @@
                                 </div>
                                 <div>
                                     <div class="font-medium text-slate-900">Finnhub API</div>
-                                    <div class="text-sm text-slate-600">Financial news & sentiment</div>
+                                    <div class="text-sm text-slate-600">Financial news & recommendations</div>
                                 </div>
                             </div>
                         </div>
@@ -437,7 +439,7 @@
 
         <!-- Slide 4: Database Schema -->
         <div class="slide slide-4">
-            <div class="px-8 py-12 h-full flex flex-col justify-center max-w-7xl mx-auto">
+            <div class="content-card">
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -445,7 +447,7 @@
                         </svg>
                     </div>
                     <h2 class="text-3xl font-bold text-slate-900 mb-4">bygDB Schema</h2>
-                    <p class="text-lg text-slate-600">Complete database architecture with all core tables</p>
+                    <!-- <p class="text-lg text-slate-600">Complete database architecture with all core tables</p> -->
                 </div>
                 
                 <div class="grid md:grid-cols-3 gap-6">
@@ -628,9 +630,138 @@
             </div>
         </div>
 
+        <!-- Slide 5: API Endpoints -->
+        <div class="slide slide-5">
+            <div class="content-card">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-gradient-to-br from-pink-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-4">🌐 API Endpoints</h2>
+                    <p class="text-lg text-slate-600">Comprehensive backend API for portfolio management</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- User & Accounts APIs -->
+                    <div class="bg-white rounded-lg border-2 border-blue-200 p-4 shadow-sm slide-in-left">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-blue-800 text-lg">🔐 User & Accounts</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /users</span>
+                                <span class="text-slate-600">Get all users</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /balance</span>
+                                <span class="text-slate-600">User balance</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /wallet</span>
+                                <span class="text-slate-600">Holdings + prices</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Portfolio & Trading APIs -->
+                    <div class="bg-white rounded-lg border-2 border-green-200 p-4 shadow-sm slide-in-left" style="animation-delay: 0.1s;">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-green-800 text-lg">📈 Portfolio & Trading</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /portfoliovalue</span>
+                                <span class="text-slate-600">Total market value</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">POST /trade</span>
+                                <span class="text-slate-600">Execute trades</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /transactions</span>
+                                <span class="text-slate-600">Transaction history</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Historical Charts APIs -->
+                    <div class="bg-white rounded-lg border-2 border-purple-200 p-4 shadow-sm slide-in-right">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-purple-800 text-lg">📉 Historical Charts</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /historical-data</span>
+                                <span class="text-slate-600">Portfolio over time</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /historical-cost</span>
+                                <span class="text-slate-600">Invested cost</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /historical-balance</span>
+                                <span class="text-slate-600">Cash balance</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Market Data APIs -->
+                    <div class="bg-white rounded-lg border-2 border-indigo-200 p-4 shadow-sm slide-in-right" style="animation-delay: 0.1s;">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-indigo-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-indigo-800 text-lg">📊 Market Data</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /search</span>
+                                <span class="text-slate-600">Stock search</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /stock/&lt;symbol&gt;</span>
+                                <span class="text-slate-600">Stock details</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /marketsindices</span>
+                                <span class="text-slate-600">Market indices</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News & Recommendations API -->
+                <div class="mt-6">
+                    <div class="bg-white rounded-lg border-2 border-orange-200 p-4 shadow-sm slide-in-left" style="animation-delay: 0.2s;">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-orange-800 text-lg">🧠 Recommendations & News</h4>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="text-sm space-y-2 text-slate-700">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /recommendationsandsentiment</span>
+                                    <span class="text-slate-600">Analyst recommendations</span>
+                                </div>
+                            </div>
+                            <div class="text-sm space-y-2 text-slate-700">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">GET /news</span>
+                                    <span class="text-slate-600">Financial news with images</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Slide 6: Future Possibilities -->
         <div class="slide slide-6">
-            <div class="px-8 py-12 h-full flex flex-col justify-center max-w-7xl mx-auto">
+            <div class="content-card">
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -638,7 +769,7 @@
                         </svg>
                     </div>
                     <h2 class="text-3xl font-bold text-slate-900 mb-4">Future Possibilities</h2>
-                    <p class="text-lg text-slate-600">Expanding TAPfolio's capabilities for enhanced investment management</p>
+                    <!-- <p class="text-lg text-slate-600">Expanding TAPfolio's capabilities for enhanced investment management</p> -->
                 </div>
                 
                 <div class="grid md:grid-cols-3 gap-8">
@@ -696,7 +827,7 @@
                                 </div>
                                 <div>
                                     <div class="font-medium text-slate-800">Technical Indicators</div>
-                                    <div class="text-sm text-slate-600">RSI, MACD, moving averages</div>
+                                    <div class="text-sm text-slate-600">Moving averages</div>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-3">
@@ -705,7 +836,7 @@
                                 </div>
                                 <div>
                                     <div class="font-medium text-slate-800">Financial Ratios</div>
-                                    <div class="text-sm text-slate-600">P/E, P/B, debt-to-equity</div>
+                                    <div class="text-sm text-slate-600">P/B, debt-to-equity</div>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-3">
@@ -735,7 +866,7 @@
                                 </div>
                                 <div>
                                     <div class="font-medium text-slate-800">Smart Recommendations</div>
-                                    <div class="text-sm text-slate-600">Personalized buy/sell/hold advice</div>
+                                    <div class="text-sm text-slate-600">Personalized buy/hold/sell advice</div>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-3">
@@ -753,7 +884,7 @@
                                 </div>
                                 <div>
                                     <div class="font-medium text-slate-800">Market Insights</div>
-                                    <div class="text-sm text-slate-600">Real-time analysis & alerts</div>
+                                    <div class="text-sm text-slate-600">Smart analysis & alerts</div>
                                 </div>
                             </div>
                         </div>
@@ -762,12 +893,12 @@
             </div>
         </div>
 
-        <!-- Slide 6: Demo & Screenshots -->
-        <div class="slide slide-6">
+        <!-- Slide 7: Demo & Screenshots -->
+        <div class="slide slide-7">
             <div class="content-card">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-slate-900 mb-4">Live Demo</h2>
-                    <p class="text-lg text-slate-600">See TAPfolio in action</p>
+                    <!-- <p class="text-lg text-slate-600">See TAPfolio in action</p> -->
                 </div>
                 
                 <div class="grid md:grid-cols-3 gap-6">
@@ -794,7 +925,7 @@
                                     </svg>
                                 </div>
                                 <h3 class="text-lg font-semibold text-slate-900 mb-2">Homebroker</h3>
-                                <p class="text-sm text-slate-600">Intuitive stock search and trading execution</p>
+                                <p class="text-sm text-slate-600">Intuitive stock search and smooth trading execution</p>
                             </div>
                         </div>
                     </div>
@@ -829,14 +960,14 @@
             </div>
         </div>
 
-        <!-- Slide 7: Thank You -->
-        <div class="slide slide-7">
+        <!-- Slide 8: Thank You -->
+        <div class="slide slide-8">
             <div class="text-center">
                 <div class="tapfolio-brand mb-8">TAPfolio</div>
                 <h2 class="text-4xl font-bold text-white mb-6 fade-in">Thank You</h2>
-                <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto fade-in">
-                    Ready to revolutionize portfolio management?
-                </p>
+                <!-- <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto fade-in">
+                    Ready to revolutionize your portfolio management experience?
+                </p> -->
                 
                 <div class="flex items-center justify-center space-x-6 fade-in">
                     <a href="portfoliotable.html" target="_blank" class="px-8 py-3 bg-white text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors font-semibold">
@@ -845,10 +976,6 @@
                     <button onclick="goToSlide(0)" class="px-8 py-3 border-2 border-white text-white rounded-lg hover:bg-white hover:text-indigo-600 transition-colors font-semibold">
                         Restart Presentation
                     </button>
-                </div>
-                
-                <div class="mt-12 text-white/70 text-sm">
-                    <p>Professional Portfolio Management • Real-time Analytics • Smart Trading</p>
                 </div>
             </div>
         </div>
