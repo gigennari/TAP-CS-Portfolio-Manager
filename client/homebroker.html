@@ -8,6 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/config.js"></script>
     <script src="market-banner.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .search-results {
             max-height: 300px;
@@ -32,6 +35,39 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
+
+        /* TAPfolio Brand Styling */
+        .tapfolio-brand {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 800;
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.025em;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .tapfolio-brand:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+
+        /* Page Title Styling */
+        .page-title {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #64748b;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -40,8 +76,7 @@
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900">Stock Trading</h1>
-                    <p class="text-slate-600 text-sm mt-1">Search and trade stocks with real-time data</p>
+                    <a href="portfoliotable.html" class="tapfolio-brand">TAPfolio</a>
                 </div>
                 
                 <!-- Centered Navigation Menu -->
@@ -97,6 +132,11 @@
     </header>
 
     <div class="container mx-auto px-4 py-8">
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="page-title text-3xl">Stock Trading</h1>
+            <p class="page-subtitle text-lg">Search and trade stocks with real-time market data and advanced analytics</p>
+        </div>
 
         <!-- Search Section -->
         <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">

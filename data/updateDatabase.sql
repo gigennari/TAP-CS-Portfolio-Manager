@@ -15,6 +15,7 @@ TRUNCATE TABLE users;
 SET FOREIGN_KEY_CHECKS = 1;
 
 
+
 -- 1. Create users
 INSERT INTO users (username, name, birth_date, email)
 VALUES ('giovanna', 'Giovanna', '1990-01-01', 'giovanna@example.com');

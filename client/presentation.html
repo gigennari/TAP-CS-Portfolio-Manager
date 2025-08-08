@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAPfolio - Professional Portfolio Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        /* Slide Container */
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            padding: 2rem;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide.prev {
+            transform: translateX(-100%);
+        }
+
+        /* TAPfolio Brand */
+        .tapfolio-brand {
+            font-weight: 900;
+            font-size: 4rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.05em;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Content Cards */
+        .content-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 900px;
+            width: 100%;
+            animation: slideUp 0.8s ease-out 0.3s both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Feature Cards */
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Navigation */
+        .nav-button {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-button:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .nav-prev {
+            left: 2rem;
+        }
+
+        .nav-next {
+            right: 2rem;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-in-left {
+            animation: slideInLeft 0.8s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.8s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .tapfolio-brand {
+                font-size: 2.5rem;
+            }
+            
+            .content-card {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .nav-button {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        /* Background Patterns */
+        .slide-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .slide-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .slide-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .slide-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .slide-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .slide-6 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .slide-7 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+        /* Chart Animation */
+        .chart-bar {
+            animation: growUp 1s ease-out;
+        }
+
+        @keyframes growUp {
+            from { transform: scaleY(0); }
+            to { transform: scaleY(1); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Buttons -->
+    <button class="nav-button nav-prev" onclick="previousSlide()">
+        <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+    </button>
+    
+    <button class="nav-button nav-next" onclick="nextSlide()">
+        <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+    </button>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-dot active" onclick="goToSlide(0)"></div>
+        <div class="progress-dot" onclick="goToSlide(1)"></div>
+        <div class="progress-dot" onclick="goToSlide(2)"></div>
+        <div class="progress-dot" onclick="goToSlide(3)"></div>
+        <div class="progress-dot" onclick="goToSlide(4)"></div>
+        <div class="progress-dot" onclick="goToSlide(5)"></div>
+        <div class="progress-dot" onclick="goToSlide(6)"></div>
+    </div>
+
+    <!-- Slide Container -->
+    <div class="slide-container">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide slide-1 active">
+            <div class="text-center">
+                <div class="tapfolio-brand mb-8">TAPfolio</div>
+                <h2 class="text-4xl font-bold text-white mb-6 fade-in">Professional Portfolio Management</h2>
+                <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto fade-in">
+                    Empowering investors with comprehensive analytics, real-time data, and intelligent insights
+                </p>
+                <div class="flex items-center justify-center space-x-4 fade-in">
+                    <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    <span class="text-white/80 text-sm">Swipe or use arrow keys to navigate</span>
+                    <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Problem Statement -->
+        <div class="slide slide-2">
+            <div class="content-card">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-4">The Challenge</h2>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="slide-in-left">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3">Traditional Portfolio Management</h3>
+                        <ul class="space-y-2 text-slate-600">
+                            <li class="flex items-center space-x-2">
+                                <span class="w-2 h-2 bg-red-400 rounded-full"></span>
+                                <span>Fragmented data across multiple platforms</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <span class="w-2 h-2 bg-red-400 rounded-full"></span>
+                                <span>Limited real-time insights</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <span class="w-2 h-2 bg-red-400 rounded-full"></span>
+                                <span>Complex user interfaces</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <span class="w-2 h-2 bg-red-400 rounded-full"></span>
+                                <span>Lack of comprehensive analytics</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="slide-in-right">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3">Impact on Investors</h3>
+                        <div class="bg-slate-50 rounded-lg p-4">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-red-600 mb-2">73%</div>
+                                <p class="text-sm text-slate-600">of investors struggle with portfolio tracking</p>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 rounded-lg p-4 mt-4">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-red-600 mb-2">$2.1T</div>
+                                <p class="text-sm text-slate-600">lost annually due to poor investment decisions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Solution Overview -->
+        <div class="slide slide-3">
+            <div class="content-card">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-4">TAPfolio Solution</h2>
+                    <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+                        A comprehensive, user-friendly platform that unifies portfolio management with advanced analytics and real-time insights
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="feature-card text-center fade-in">
+                        <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-slate-900 mb-2">Unified Dashboard</h3>
+                        <p class="text-sm text-slate-600">All your investments in one comprehensive view</p>
+                    </div>
+                    
+                    <div class="feature-card text-center fade-in" style="animation-delay: 0.2s;">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-slate-900 mb-2">Real-time Analytics</h3>
+                        <p class="text-sm text-slate-600">Live market data and performance insights</p>
+                    </div>
+                    
+                    <div class="feature-card text-center fade-in" style="animation-delay: 0.4s;">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-slate-900 mb-2">Smart Trading</h3>
+                        <p class="text-sm text-slate-600">Intelligent recommendations and execution</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Key Features -->
+        <div class="slide slide-4">
+            <div class="content-card">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-4">Key Features</h2>
+                    <p class="text-lg text-slate-600">Powerful tools designed for modern investors</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-6 slide-in-left">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900 mb-1">Portfolio Analytics</h3>
+                                <p class="text-slate-600">Advanced charts, performance metrics, and risk analysis</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900 mb-1">Multi-User Support</h3>
+                                <p class="text-slate-600">Manage multiple portfolios with user-specific insights</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900 mb-1">Market News</h3>
+                                <p class="text-slate-600">Real-time financial news and market sentiment analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6 slide-in-right">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900 mb-1">Real-time Trading</h3>
+                                <p class="text-slate-600">Execute trades with live market data and instant confirmations</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900 mb-1">Risk Management</h3>
+                                <p class="text-slate-600">Advanced risk assessment and portfolio optimization tools</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900 mb-1">Export & Reporting</h3>
+                                <p class="text-slate-600">Comprehensive reports in multiple formats (CSV, Excel, PDF)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Technology Stack -->
+        <div class="slide slide-5">
+            <div class="content-card">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-4">Technology Stack</h2>
+                    <p class="text-lg text-slate-600">Built with modern, scalable technologies</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="slide-in-left">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4">Frontend</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
+                                <div class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                    <span class="text-blue-600 font-bold text-sm">JS</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-900">Vanilla JavaScript</div>
+                                    <div class="text-sm text-slate-600">Pure JS for optimal performance</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
+                                <div class="w-8 h-8 bg-cyan-100 rounded flex items-center justify-center">
+                                    <span class="text-cyan-600 font-bold text-sm">TW</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-900">Tailwind CSS</div>
+                                    <div class="text-sm text-slate-600">Utility-first CSS framework</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
+                                <div class="w-8 h-8 bg-orange-100 rounded flex items-center justify-center">
+                                    <span class="text-orange-600 font-bold text-sm">CJ</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-900">Chart.js</div>
+                                    <div class="text-sm text-slate-600">Interactive data visualization</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-in-right">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4">Backend & APIs</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
+                                <div class="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
+                                    <span class="text-green-600 font-bold text-sm">PY</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-900">Python Flask</div>
+                                    <div class="text-sm text-slate-600">Lightweight web framework</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
+                                <div class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                    <span class="text-blue-600 font-bold text-sm">AV</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-900">Alpha Vantage API</div>
+                                    <div class="text-sm text-slate-600">Real-time market data</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
+                                <div class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
+                                    <span class="text-purple-600 font-bold text-sm">FH</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-900">Finnhub API</div>
+                                    <div class="text-sm text-slate-600">Financial news & sentiment</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
+                    <div class="text-center">
+                        <h4 class="text-lg font-semibold text-slate-900 mb-2">Architecture Benefits</h4>
+                        <div class="grid md:grid-cols-3 gap-4 text-sm">
+                            <div class="text-slate-600">
+                                <span class="font-medium text-indigo-600">Scalable:</span> Modular design for easy expansion
+                            </div>
+                            <div class="text-slate-600">
+                                <span class="font-medium text-purple-600">Reliable:</span> Robust error handling & validation
+                            </div>
+                            <div class="text-slate-600">
+                                <span class="font-medium text-green-600">Fast:</span> Optimized for performance
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Demo & Screenshots -->
+        <div class="slide slide-6">
+            <div class="content-card">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-4">Live Demo</h2>
+                    <p class="text-lg text-slate-600">See TAPfolio in action</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="slide-in-left">
+                        <div class="bg-slate-100 rounded-lg p-6 h-64 flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-semibold text-slate-900 mb-2">Portfolio Dashboard</h3>
+                                <p class="text-sm text-slate-600">Comprehensive overview with real-time updates</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-in-right">
+                        <div class="bg-slate-100 rounded-lg p-6 h-64 flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-semibold text-slate-900 mb-2">Trading Interface</h3>
+                                <p class="text-sm text-slate-600">Intuitive stock search and trading execution</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <a href="portfoliotable.html" target="_blank" class="inline-flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        <span>Launch TAPfolio</span>
+                    </a>
+                </div>
+                
+                <div class="mt-6 grid md:grid-cols-3 gap-4 text-center text-sm text-slate-600">
+                    <div>
+                        <div class="font-semibold text-slate-900">Multi-User</div>
+                        <div>Support for multiple portfolios</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-slate-900">Real-time</div>
+                        <div>Live market data integration</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-slate-900">Analytics</div>
+                        <div>Advanced performance metrics</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Thank You -->
+        <div class="slide slide-7">
+            <div class="text-center">
+                <div class="tapfolio-brand mb-8">TAPfolio</div>
+                <h2 class="text-4xl font-bold text-white mb-6 fade-in">Thank You</h2>
+                <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto fade-in">
+                    Ready to revolutionize portfolio management?
+                </p>
+                
+                <div class="flex items-center justify-center space-x-6 fade-in">
+                    <a href="portfoliotable.html" target="_blank" class="px-8 py-3 bg-white text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors font-semibold">
+                        Try TAPfolio
+                    </a>
+                    <button onclick="goToSlide(0)" class="px-8 py-3 border-2 border-white text-white rounded-lg hover:bg-white hover:text-indigo-600 transition-colors font-semibold">
+                        Restart Presentation
+                    </button>
+                </div>
+                
+                <div class="mt-12 text-white/70 text-sm">
+                    <p>Professional Portfolio Management • Real-time Analytics • Smart Trading</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const progressDots = document.querySelectorAll('.progress-dot');
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            // Hide all slides
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active', 'prev');
+                if (i < index) {
+                    slide.classList.add('prev');
+                } else if (i === index) {
+                    slide.classList.add('active');
+                }
+            });
+
+            // Update progress dots
+            progressDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+
+            currentSlide = index;
+        }
+
+        function nextSlide() {
+            const next = (currentSlide + 1) % totalSlides;
+            showSlide(next);
+        }
+
+        function previousSlide() {
+            const prev = (currentSlide - 1 + totalSlides) % totalSlides;
+            showSlide(prev);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                previousSlide();
+            } else if (e.key >= '1' && e.key <= '7') {
+                e.preventDefault();
+                goToSlide(parseInt(e.key) - 1);
+            }
+        });
+
+        // Touch/swipe support
+        let startX = 0;
+        let startY = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            if (!startX || !startY) return;
+
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
+
+            const diffX = startX - endX;
+            const diffY = startY - endY;
+
+            // Only trigger if horizontal swipe is more significant than vertical
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                if (diffX > 0) {
+                    nextSlide(); // Swipe left - next slide
+                } else {
+                    previousSlide(); // Swipe right - previous slide
+                }
+            }
+
+            startX = 0;
+            startY = 0;
+        });
+
+        // Auto-advance slides (optional - uncomment to enable)
+        // setInterval(nextSlide, 10000); // Auto-advance every 10 seconds
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>
