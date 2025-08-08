@@ -202,12 +202,11 @@
 
         /* Background Patterns */
         .slide-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .slide-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .slide-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .slide-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-        .slide-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .slide-6 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
-        .slide-7 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .slide-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .slide-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .slide-4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .slide-5 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .slide-6 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 
         /* Chart Animation */
         .chart-bar {
@@ -242,7 +241,6 @@
         <div class="progress-dot" onclick="goToSlide(3)"></div>
         <div class="progress-dot" onclick="goToSlide(4)"></div>
         <div class="progress-dot" onclick="goToSlide(5)"></div>
-        <div class="progress-dot" onclick="goToSlide(6)"></div>
     </div>
 
     <!-- Slide Container -->
@@ -256,70 +254,13 @@
                 <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto fade-in">
                     Empowering investors with comprehensive analytics, real-time data, and intelligent insights
                 </p>
-                <!-- <div class="flex items-center justify-center space-x-4 fade-in">
-                    <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    <span class="text-white/80 text-sm">Swipe or use arrow keys to navigate</span>
-                    <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                </div> -->
+
             </div>
         </div>
 
-        <!-- Slide 2: Problem Statement -->
+
+        <!-- Slide 2: Solution Overview -->
         <div class="slide slide-2">
-            <div class="content-card">
-                <div class="text-center mb-8">
-                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                        </svg>
-                    </div>
-                    <h2 class="text-3xl font-bold text-slate-900 mb-4">The Challenge</h2>
-                </div>
-                
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="slide-in-left">
-                        <h3 class="text-xl font-semibold text-slate-800 mb-3">Traditional Portfolio Management</h3>
-                        <ul class="space-y-2 text-slate-600">
-                            <li class="flex items-center space-x-2">
-                                <span class="w-2 h-2 bg-red-400 rounded-full"></span>
-                                <span>Fragmented data across multiple platforms</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <span class="w-2 h-2 bg-red-400 rounded-full"></span>
-                                <span>Limited real-time insights</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <span class="w-2 h-2 bg-red-400 rounded-full"></span>
-                                <span>Complex user interfaces</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <span class="w-2 h-2 bg-red-400 rounded-full"></span>
-                                <span>Lack of comprehensive analytics</span>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <div class="slide-in-right">
-                        <h3 class="text-xl font-semibold text-slate-800 mb-3">Impact on Investors</h3>
-                        <div class="bg-slate-50 rounded-lg p-4">
-                            <div class="text-center">
-                                <div class="text-3xl font-bold text-red-600 mb-2">73%</div>
-                                <p class="text-sm text-slate-600">of investors struggle with portfolio tracking</p>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 rounded-lg p-4 mt-4">
-                            <div class="text-center">
-                                <div class="text-3xl font-bold text-red-600 mb-2">$2.1T</div>
-                                <p class="text-sm text-slate-600">lost annually due to poor investment decisions</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Slide 3: Solution Overview -->
-        <div class="slide slide-3">
             <div class="content-card">
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -367,8 +308,8 @@
             </div>
         </div>
 
-        <!-- Slide 4: Key Features -->
-        <div class="slide slide-4">
+        <!-- Slide 3: Key Features -->
+        <div class="slide slide-3">
             <div class="content-card">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-slate-900 mb-4">Key Features</h2>
@@ -445,7 +386,7 @@
         </div>
 
         <!-- Slide 5: Technology Stack -->
-        <div class="slide slide-5">
+        <div class="slide slide-4">
             <div class="content-card">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-slate-900 mb-4">Technology Stack</h2>
@@ -468,7 +409,7 @@
                             
                             <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
                                 <div class="w-8 h-8 flex items-center justify-center">
-                                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-plain.svg" alt="Tailwind CSS" class="w-8 h-8">
+                                    <img src="https://logowik.com/content/uploads/images/tailwind-css3232.logowik.com.webp" alt="Tailwind CSS" class="w-8 h-8 object-contain">
                                 </div>
                                 <div>
                                     <div class="font-medium text-slate-900">Tailwind CSS</div>
@@ -523,7 +464,7 @@
                             
                             <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
                                 <div class="w-8 h-8 flex items-center justify-center">
-                                    <img src="https://avatars.githubusercontent.com/u/28738722?s=200&v=4" alt="Alpha Vantage API" class="w-8 h-8 rounded">
+                                    <img src="https://www.alphavantage.co/logo.png" alt="Alpha Vantage API" class="w-8 h-8 object-contain">
                                 </div>
                                 <div>
                                     <div class="font-medium text-slate-900">Alpha Vantage API</div>
@@ -533,7 +474,7 @@
                             
                             <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
                                 <div class="w-8 h-8 flex items-center justify-center">
-                                    <img src="https://finnhub.io/static/img/webp/finnhub_2020.webp" alt="Finnhub API" class="w-8 h-8 rounded">
+                                    <img src="https://static.finnhub.io/img/finnhub_2020-05-09_20_51/logo/logo-gradient2.png" alt="Finnhub API" class="w-8 h-8 object-contain">
                                 </div>
                                 <div>
                                     <div class="font-medium text-slate-900">Finnhub API</div>
@@ -547,7 +488,7 @@
         </div>
 
         <!-- Slide 6: Demo & Screenshots -->
-        <div class="slide slide-6">
+        <div class="slide slide-5">
             <div class="content-card">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-slate-900 mb-4">Live Demo</h2>
@@ -611,7 +552,7 @@
         </div>
 
         <!-- Slide 7: Thank You -->
-        <div class="slide slide-7">
+        <div class="slide slide-6">
             <div class="text-center">
                 <div class="tapfolio-brand mb-8">TAPfolio</div>
                 <h2 class="text-4xl font-bold text-white mb-6 fade-in">Thank You</h2>
@@ -683,7 +624,7 @@
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 previousSlide();
-            } else if (e.key >= '1' && e.key <= '7') {
+            } else if (e.key >= '1' && e.key <= '6') {
                 e.preventDefault();
                 goToSlide(parseInt(e.key) - 1);
             }
