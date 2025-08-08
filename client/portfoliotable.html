@@ -1996,7 +1996,7 @@
                     console.log('Auto-refreshing portfolio data...');
                     loadUserPortfolioOnly(currentUserId); // Load portfolio data without transactions
                 }
-            }, 60000); // 60 seconds
+            }, 600000); // 10 minutes
         });
 
         // Portfolio Value Trend Chart
@@ -2573,8 +2573,8 @@
                 }
             }
 
-            // Update prices every 30 seconds
-            setInterval(updatePrices, 30000);
+            // Update prices every 10 minutes
+            setInterval(updatePrices, 600000);
 
             // Add event listener for calculate return button
             const calculateReturnBtn = document.getElementById('calculateReturnBtn');
