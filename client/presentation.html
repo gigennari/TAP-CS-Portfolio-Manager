@@ -493,7 +493,7 @@
 
         <!-- Slide 5: Database Schema -->
         <div class="slide slide-5">
-            <div class="px-8 py-12 h-full flex flex-col justify-center max-w-7xl mx-auto">
+            <div class="content-card">
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -501,167 +501,182 @@
                         </svg>
                     </div>
                     <h2 class="text-3xl font-bold text-slate-900 mb-4">bygDB Schema</h2>
-                    <p class="text-lg text-slate-600">Scalable database architecture designed for growth</p>
+                    <p class="text-lg text-slate-600">Complete database architecture with all core tables</p>
                 </div>
                 
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Database Schema Diagram -->
-                    <div class="slide-in-left">
-                        <div class="bg-slate-50 rounded-lg p-6">
-                            <h3 class="text-xl font-semibold text-slate-900 mb-4 text-center">Core Tables & Relationships</h3>
-                            
-                            <!-- Users Table -->
-                            <div class="bg-white rounded-lg border-2 border-blue-200 p-4 mb-4 shadow-sm">
-                                <div class="flex items-center mb-2">
-                                    <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                                    <h4 class="font-bold text-blue-800">users</h4>
-                                </div>
-                                <div class="text-xs space-y-1 text-slate-600">
-                                    <div class="flex justify-between">
-                                        <span class="font-semibold text-yellow-600">🔑 user_id (PK)</span>
-                                        <span>INT</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>name</span>
-                                        <span>VARCHAR</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>email</span>
-                                        <span>VARCHAR</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>balance</span>
-                                        <span>DECIMAL</span>
-                                    </div>
-                                </div>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Users Table -->
+                    <div class="bg-white rounded-lg border-2 border-blue-200 p-4 shadow-sm slide-in-left">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-blue-800 text-lg">users</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-yellow-600">🔑 id (PK)</span>
+                                <span class="text-slate-500">INT</span>
                             </div>
-
-                            <!-- Portfolios Table -->
-                            <div class="bg-white rounded-lg border-2 border-green-200 p-4 mb-4 shadow-sm">
-                                <div class="flex items-center mb-2">
-                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                                    <h4 class="font-bold text-green-800">portfolios</h4>
-                                </div>
-                                <div class="text-xs space-y-1 text-slate-600">
-                                    <div class="flex justify-between">
-                                        <span class="font-semibold text-yellow-600">🔑 portfolio_id (PK)</span>
-                                        <span>INT</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="font-semibold text-blue-600">🔗 user_id (FK)</span>
-                                        <span>INT</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>symbol</span>
-                                        <span>VARCHAR</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>quantity</span>
-                                        <span>INT</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>avg_price</span>
-                                        <span>DECIMAL</span>
-                                    </div>
-                                </div>
+                            <div class="flex justify-between">
+                                <span>username</span>
+                                <span class="text-slate-500">VARCHAR(100)</span>
                             </div>
-
-                            <!-- Transactions Table -->
-                            <div class="bg-white rounded-lg border-2 border-purple-200 p-4 shadow-sm">
-                                <div class="flex items-center mb-2">
-                                    <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
-                                    <h4 class="font-bold text-purple-800">transactions</h4>
-                                </div>
-                                <div class="text-xs space-y-1 text-slate-600">
-                                    <div class="flex justify-between">
-                                        <span class="font-semibold text-yellow-600">🔑 transaction_id (PK)</span>
-                                        <span>INT</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="font-semibold text-blue-600">🔗 user_id (FK)</span>
-                                        <span>INT</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>symbol</span>
-                                        <span>VARCHAR</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>type</span>
-                                        <span>ENUM</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>quantity</span>
-                                        <span>INT</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>price</span>
-                                        <span>DECIMAL</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>timestamp</span>
-                                        <span>DATETIME</span>
-                                    </div>
-                                </div>
+                            <div class="flex justify-between">
+                                <span>name</span>
+                                <span class="text-slate-500">VARCHAR(100)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>birth_date</span>
+                                <span class="text-slate-500">DATE</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>email</span>
+                                <span class="text-slate-500">VARCHAR(100)</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Scalability & Future Expansion -->
-                    <div class="slide-in-right">
-                        <div class="space-y-6">
-                            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-200">
-                                <h3 class="text-xl font-semibold text-slate-900 mb-4">🚀 Scalability Features</h3>
-                                <ul class="space-y-3 text-slate-700">
-                                    <li class="flex items-start space-x-3">
-                                        <div class="w-2 h-2 bg-indigo-500 rounded-full mt-2 flex-shrink-0"></div>
-                                        <span><strong>Normalized Design:</strong> Eliminates data redundancy and ensures consistency</span>
-                                    </li>
-                                    <li class="flex items-start space-x-3">
-                                        <div class="w-2 h-2 bg-indigo-500 rounded-full mt-2 flex-shrink-0"></div>
-                                        <span><strong>Foreign Key Relationships:</strong> Maintains data integrity across tables</span>
-                                    </li>
-                                    <li class="flex items-start space-x-3">
-                                        <div class="w-2 h-2 bg-indigo-500 rounded-full mt-2 flex-shrink-0"></div>
-                                        <span><strong>Indexed Primary Keys:</strong> Optimized for fast queries and joins</span>
-                                    </li>
-                                </ul>
-                            </div>
 
-                            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200">
-                                <h3 class="text-xl font-semibold text-slate-900 mb-4">💡 Schema Benefits</h3>
-                                <ul class="space-y-3 text-slate-700">
-                                    <li class="flex items-start space-x-3">
-                                        <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                        <span><strong>Multi-User Support:</strong> Each user maintains separate portfolios and transactions</span>
-                                    </li>
-                                    <li class="flex items-start space-x-3">
-                                        <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                        <span><strong>Transaction History:</strong> Complete audit trail for all portfolio changes</span>
-                                    </li>
-                                    <li class="flex items-start space-x-3">
-                                        <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                        <span><strong>Easy Expansion:</strong> Add new asset types without restructuring existing data</span>
-                                    </li>
-                                </ul>
+                    <!-- Accounts Table -->
+                    <div class="bg-white rounded-lg border-2 border-green-200 p-4 shadow-sm slide-in-left" style="animation-delay: 0.1s;">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-green-800 text-lg">accounts</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-yellow-600">🔑 id (PK)</span>
+                                <span class="text-slate-500">INT</span>
                             </div>
+                            <div class="flex justify-between">
+                                <span>balance</span>
+                                <span class="text-slate-500">DECIMAL(10,2)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-blue-600">🔗 user_id (FK)</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                        </div>
+                    </div>
 
-                            <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-6 border border-yellow-200">
-                                <h3 class="text-lg font-semibold text-slate-900 mb-3">🔗 Relationship Benefits</h3>
-                                <div class="text-sm text-slate-700 space-y-2">
-                                    <div class="flex items-center space-x-2">
-                                        <span class="font-semibold text-blue-600">users.user_id</span>
-                                        <span>→</span>
-                                        <span class="font-semibold text-green-600">portfolios.user_id</span>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="font-semibold text-blue-600">users.user_id</span>
-                                        <span>→</span>
-                                        <span class="font-semibold text-purple-600">transactions.user_id</span>
-                                    </div>
-                                    <p class="text-xs text-slate-600 mt-3 italic">
-                                        Enables complex queries, portfolio aggregation, and transaction history tracking
-                                    </p>
-                                </div>
+                    <!-- Portfolios Table -->
+                    <div class="bg-white rounded-lg border-2 border-purple-200 p-4 shadow-sm slide-in-left" style="animation-delay: 0.2s;">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-purple-800 text-lg">portfolios</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-yellow-600">🔑 id (PK)</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-green-600">🔗 account_id (FK)</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>created_at</span>
+                                <span class="text-slate-500">TIMESTAMP</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>active</span>
+                                <span class="text-slate-500">BOOLEAN</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>asset_class</span>
+                                <span class="text-slate-500">VARCHAR(50)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stocks Table -->
+                    <div class="bg-white rounded-lg border-2 border-indigo-200 p-4 shadow-sm slide-in-right">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-indigo-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-indigo-800 text-lg">stocks</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-yellow-600">🔑 id (PK)</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>symbol</span>
+                                <span class="text-slate-500">VARCHAR(10)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>company_name</span>
+                                <span class="text-slate-500">VARCHAR(100)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>sector</span>
+                                <span class="text-slate-500">VARCHAR(50)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>industry</span>
+                                <span class="text-slate-500">VARCHAR(50)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- StocksPortfolios Table -->
+                    <div class="bg-white rounded-lg border-2 border-orange-200 p-4 shadow-sm slide-in-right" style="animation-delay: 0.1s;">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-orange-800 text-lg">stocksportfolios</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-yellow-600">🔑 id (PK)</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-purple-600">🔗 portfolios_id (FK)</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-indigo-600">🔗 stock_id (FK)</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>quantity</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>average_cost</span>
+                                <span class="text-slate-500">DECIMAL(10,2)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- StocksTransactions Table -->
+                    <div class="bg-white rounded-lg border-2 border-red-200 p-4 shadow-sm slide-in-right" style="animation-delay: 0.2s;">
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+                            <h4 class="font-bold text-red-800 text-lg">stockstransactions</h4>
+                        </div>
+                        <div class="text-sm space-y-2 text-slate-700">
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-yellow-600">🔑 id (PK)</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-orange-600">🔗 stocksportfolios_id (FK)</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>transaction_type</span>
+                                <span class="text-slate-500">ENUM</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>quantity</span>
+                                <span class="text-slate-500">INT</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>price</span>
+                                <span class="text-slate-500">DECIMAL(10,2)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>transaction_date</span>
+                                <span class="text-slate-500">TIMESTAMP</span>
                             </div>
                         </div>
                     </div>
@@ -671,7 +686,7 @@
 
         <!-- Slide 6: Future Possibilities -->
         <div class="slide slide-6">
-            <div class="px-8 py-12 h-full flex flex-col justify-center max-w-7xl mx-auto">
+            <div class="content-card">
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -679,117 +694,122 @@
                         </svg>
                     </div>
                     <h2 class="text-3xl font-bold text-slate-900 mb-4">Future Possibilities</h2>
-                    <p class="text-lg text-slate-600">Expanding horizons with AI-powered insights and diverse asset classes</p>
+                    <p class="text-lg text-slate-600">Expanding TAPfolio's capabilities for enhanced investment management</p>
                 </div>
                 
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- AI Financial Advisor -->
-                    <div class="slide-in-left">
-                        <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-6 border border-blue-200 h-full">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-4">
-                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                                    </svg>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Expand Asset Classes -->
+                    <div class="feature-card text-center fade-in">
+                        <div class="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-slate-900 mb-4">📈 Expand Asset Classes</h3>
+                        <div class="space-y-3 text-left">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+                                    <span class="text-xl">🪙</span>
                                 </div>
-                                <h3 class="text-xl font-bold text-slate-900">🤖 AI Financial Advisor</h3>
+                                <div>
+                                    <div class="font-medium text-slate-800">Cryptocurrency</div>
+                                    <div class="text-sm text-slate-600">Bitcoin, Ethereum, DeFi tokens</div>
+                                </div>
                             </div>
-                            
-                            <div class="space-y-4">
-                                <div class="bg-white rounded-lg p-4 shadow-sm">
-                                    <h4 class="font-semibold text-slate-800 mb-2">Holistic Portfolio Analysis</h4>
-                                    <p class="text-sm text-slate-600">AI examines all user portfolios collectively, identifying patterns and correlations across different holdings</p>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+                                    <span class="text-xl">🏠</span>
                                 </div>
-                                
-                                <div class="bg-white rounded-lg p-4 shadow-sm">
-                                    <h4 class="font-semibold text-slate-800 mb-2">Market-Based Assessment</h4>
-                                    <p class="text-sm text-slate-600">Real-time market analysis provides personalized recommendations based on current conditions and trends</p>
+                                <div>
+                                    <div class="font-medium text-slate-800">Real Estate</div>
+                                    <div class="text-sm text-slate-600">REITs, property investments</div>
                                 </div>
-                                
-                                <div class="bg-white rounded-lg p-4 shadow-sm">
-                                    <h4 class="font-semibold text-slate-800 mb-2">Smart Recommendations</h4>
-                                    <ul class="text-sm text-slate-600 space-y-1">
-                                        <li>• Risk diversification strategies</li>
-                                        <li>• Optimal rebalancing suggestions</li>
-                                        <li>• Market timing insights</li>
-                                        <li>• Tax-loss harvesting opportunities</li>
-                                    </ul>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+                                    <span class="text-xl">💎</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-800">Commodities</div>
+                                    <div class="text-sm text-slate-600">Gold, oil, agricultural products</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Future Asset Classes -->
-                    <div class="slide-in-right">
-                        <div class="space-y-6">
-                            <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg p-6 border border-green-200">
-                                <h3 class="text-xl font-bold text-slate-900 mb-4">📈 Expanding Asset Classes</h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="bg-white rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div class="text-3xl mb-2">🪙</div>
-                                        <div class="font-semibold text-slate-800">Cryptocurrency</div>
-                                        <div class="text-xs text-slate-600 mt-1">Bitcoin, Ethereum, DeFi tokens</div>
-                                    </div>
-                                    <div class="bg-white rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div class="text-3xl mb-2">🏠</div>
-                                        <div class="font-semibold text-slate-800">Real Estate</div>
-                                        <div class="text-xs text-slate-600 mt-1">REITs, property investments</div>
-                                    </div>
-                                    <div class="bg-white rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div class="text-3xl mb-2">💎</div>
-                                        <div class="font-semibold text-slate-800">Commodities</div>
-                                        <div class="text-xs text-slate-600 mt-1">Gold, oil, agricultural products</div>
-                                    </div>
-                                    <div class="bg-white rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div class="text-3xl mb-2">📊</div>
-                                        <div class="font-semibold text-slate-800">Derivatives</div>
-                                        <div class="text-xs text-slate-600 mt-1">Options, futures, swaps</div>
-                                    </div>
+                    <!-- Deeper Stock Analysis -->
+                    <div class="feature-card text-center fade-in" style="animation-delay: 0.2s;">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-slate-900 mb-4">📊 Deeper Stock Analysis</h3>
+                        <div class="space-y-3 text-left">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <span class="text-blue-600 font-bold text-sm">📈</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-800">Technical Indicators</div>
+                                    <div class="text-sm text-slate-600">RSI, MACD, moving averages</div>
                                 </div>
                             </div>
-
-                            <div class="bg-gradient-to-br from-purple-50 to-pink-100 rounded-lg p-6 border border-purple-200">
-                                <h3 class="text-xl font-bold text-slate-900 mb-4">🚀 Advanced Features</h3>
-                                <div class="space-y-3">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                            <span class="text-purple-600 font-bold text-sm">ML</span>
-                                        </div>
-                                        <div>
-                                            <div class="font-semibold text-slate-800">Machine Learning Models</div>
-                                            <div class="text-xs text-slate-600">Predictive analytics for market movements</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                            <span class="text-purple-600 font-bold text-sm">📱</span>
-                                        </div>
-                                        <div>
-                                            <div class="font-semibold text-slate-800">Mobile Application</div>
-                                            <div class="text-xs text-slate-600">Native iOS and Android apps</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                            <span class="text-purple-600 font-bold text-sm">🔔</span>
-                                        </div>
-                                        <div>
-                                            <div class="font-semibold text-slate-800">Smart Alerts</div>
-                                            <div class="text-xs text-slate-600">AI-powered notifications and insights</div>
-                                        </div>
-                                    </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <span class="text-blue-600 font-bold text-sm">💰</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-800">Financial Ratios</div>
+                                    <div class="text-sm text-slate-600">P/E, P/B, debt-to-equity</div>
                                 </div>
                             </div>
-
-                            <div class="bg-gradient-to-br from-yellow-50 to-orange-100 rounded-lg p-4 border border-yellow-200">
-                                <div class="text-center">
-                                    <div class="text-2xl font-bold text-orange-600 mb-1">∞</div>
-                                    <div class="font-semibold text-slate-800">Limitless Potential</div>
-                                    <div class="text-xs text-slate-600 mt-1">
-                                        Built for continuous innovation and expansion
-                                    </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <span class="text-blue-600 font-bold text-sm">📋</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-800">Company Fundamentals</div>
+                                    <div class="text-sm text-slate-600">Earnings, revenue, growth metrics</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Assistant -->
+                    <div class="feature-card text-center fade-in" style="animation-delay: 0.4s;">
+                        <div class="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-slate-900 mb-4">🤖 AI Assistant</h3>
+                        <div class="space-y-3 text-left">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
+                                    <span class="text-purple-600 font-bold text-sm">🎯</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-800">Smart Recommendations</div>
+                                    <div class="text-sm text-slate-600">Personalized buy/sell/hold advice</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
+                                    <span class="text-purple-600 font-bold text-sm">⚖️</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-800">Portfolio Optimization</div>
+                                    <div class="text-sm text-slate-600">Risk assessment & rebalancing</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
+                                    <span class="text-purple-600 font-bold text-sm">📊</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-slate-800">Market Insights</div>
+                                    <div class="text-sm text-slate-600">Real-time analysis & alerts</div>
                                 </div>
                             </div>
                         </div>
